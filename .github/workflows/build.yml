@@ -52,10 +52,16 @@ jobs:
 
       - name: 빌드
         run: |
-          if [ -n "$KEYSTORE_PATH" ]; then
-            gradle :app:assembleRelease :app:bundleRelease --no-daemon
-          else
-            gradle :app:assembleDebug --no-daemon
+          if [ -n "$KEYSTORE_PATH" ]; then T=":app:assembleRelease :app:bundleRelease"; else T=":app:assembleDebug"; fi
+          set +e
+          gradle $T --no-daemon --console=plain > build.log 2>&1
+          code=$?
+          set -e
+          tail -40 build.log
+          if [ $code -ne 0 ]; then
+            msg=$(grep -E "error:|ERROR|FAILURE|What went wrong|> " build.log | head -40 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=빌드 실패::${msg}"
+            exit 1
           fi
 
       - name: 파일 이름 정리

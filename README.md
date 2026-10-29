@@ -23,4 +23,4 @@
 ## 서명키
 
 플레이스토어용 파일은 저장소 **Settings → Secrets and variables → Actions** 에 저장된 서명키로 서명합니다.
-`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` — 서명키 파일(upload.jks)과 비밀번호는 저장소에 올리지 말고 따로 보관하세요.
+`KEYSTORE_BASE64`(서명키 파일 내용), `KEYSTORE_PASSWORD`(비밀번호) 두 개 — 서명키 파일(upload.jks)과 비밀번호는 저장소에 올리지 말고 따로 보관하세요.

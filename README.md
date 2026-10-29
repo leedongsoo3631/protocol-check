@@ -17,8 +17,8 @@
 
 저장소 첫 화면 오른쪽 **Releases** → 최신 버전
 
-- `의전체크_설치용_*.apk` — 휴대폰에 바로 설치
-- `의전체크_플레이스토어_*.aab` — Google Play Console에 업로드
+- `uijeon-check_v*.apk` — 휴대폰에 바로 설치
+- `uijeon-check_playstore_*.aab` — Google Play Console에 업로드
 
 ## 서명키
 

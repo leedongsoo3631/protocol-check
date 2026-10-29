@@ -5,6 +5,7 @@ import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -59,8 +60,10 @@ public class MainActivity extends ComponentActivity {
         // 화면 전체 사용 + 상태바/내비게이션바/키보드만큼 여백
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(0xFF1E3A8A);
+        boolean night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        root.setBackgroundColor(night ? 0xFF000000 : 0xFFF2F2F7);
         web = new WebView(this);
+        web.setBackgroundColor(night ? 0xFF000000 : 0xFFF2F2F7);
         root.addView(web, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
@@ -70,8 +73,8 @@ public class MainActivity extends ComponentActivity {
             return WindowInsetsCompat.CONSUMED;
         });
         WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        bars.setAppearanceLightStatusBars(false);
-        bars.setAppearanceLightNavigationBars(false);
+        bars.setAppearanceLightStatusBars(!night);
+        bars.setAppearanceLightNavigationBars(!night);
 
         // 사진·파일 선택 결과를 보드로 돌려준다
         picker = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {

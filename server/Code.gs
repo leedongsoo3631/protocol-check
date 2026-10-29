@@ -9,7 +9,9 @@ const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'phot
 
 /* 보드 화면 제공 */
 function doGet(e) {
-  const t = HtmlService.createTemplateFromFile('Index');
+  let t;
+  try { t = HtmlService.createTemplateFromFile('Index'); }
+  catch (err) { return HtmlService.createHtmlOutput('<p style="font:16px sans-serif;padding:24px">의전 체크 서버가 작동 중입니다. 이 주소를 앱의 설정 → 공유 서버 주소에 넣으세요.</p>').addMetaTag('viewport', 'width=device-width, initial-scale=1'); }
   t.url = ScriptApp.getService().getUrl();
   return t.evaluate()
     .setTitle('의전 체크 보드')
@@ -107,8 +109,26 @@ function api(q) {
 }
 
 /* ---------- 내부 함수 ---------- */
+/* 저장용 구글 시트: 처음 실행 때 내 드라이브에 '의전 체크 서버' 시트를 자동으로 만든다 */
+function ss_() {
+  const p = PropertiesService.getScriptProperties();
+  const id = p.getProperty('sheetId');
+  if (id) { try { return SpreadsheetApp.openById(id); } catch (e) {} }
+  try { const a = SpreadsheetApp.getActiveSpreadsheet(); if (a) return a; } catch (e) {}
+  const s = SpreadsheetApp.create('의전 체크 서버');
+  p.setProperty('sheetId', s.getId());
+  return s;
+}
+
+/* 처음 한 번 실행: 권한 승인 + 저장용 시트 만들기 (편집기에서 ▶실행) */
+function setup() {
+  const s = ss_();
+  sheet_(); logSheet_();
+  Logger.log('준비 완료. 저장용 시트: ' + s.getUrl());
+}
+
 function sheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ss_();
   let sh = ss.getSheetByName(SHEET);
   if (!sh) {
     sh = ss.insertSheet(SHEET);
@@ -152,7 +172,7 @@ function photos_(ids) {
 function label_(m) { return (m.pos ? m.pos + ' ' : '') + m.name; }
 
 function logSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ss_();
   let sh = ss.getSheetByName(LOGSHEET);
   if (!sh) {
     sh = ss.insertSheet(LOGSHEET);

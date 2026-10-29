@@ -1,0 +1,84 @@
+name: 앱 빌드
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    steps:
+      - name: 소스 가져오기
+        uses: actions/checkout@v4
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 안드로이드 SDK
+        uses: android-actions/setup-android@v3
+
+      - name: SDK 36 설치
+        run: yes | sdkmanager "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: 서명키 준비
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+            echo "서명키 있음 → 플레이스토어용 파일도 만듭니다"
+          else
+            echo "::warning::서명키(KEYSTORE_BASE64)가 없어 테스트용 APK만 만듭니다"
+          fi
+
+      - name: 빌드
+        run: |
+          if [ -n "$KEYSTORE_PATH" ]; then
+            gradle :app:assembleRelease :app:bundleRelease --no-daemon
+          else
+            gradle :app:assembleDebug --no-daemon
+          fi
+
+      - name: 파일 이름 정리
+        run: |
+          mkdir -p out
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk "out/의전체크_설치용_v1.0.${VERSION_CODE}.apk"
+            cp app/build/outputs/bundle/release/app-release.aab "out/의전체크_플레이스토어_v1.0.${VERSION_CODE}.aab"
+          else
+            cp app/build/outputs/apk/debug/app-debug.apk "out/의전체크_시험용_v1.0.${VERSION_CODE}.apk"
+          fi
+          ls -la out
+
+      - name: 결과 파일 보관 (Actions)
+        uses: actions/upload-artifact@v4
+        with:
+          name: 의전체크-v1.0.${{ github.run_number }}
+          path: out/*
+
+      - name: 휴대폰에서 받기 쉬운 Releases 에 올리기
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: 의전 체크 v1.0.${{ github.run_number }}
+          body: |
+            - 의전체크_설치용_*.apk : 휴대폰에 바로 설치하는 파일
+            - 의전체크_플레이스토어_*.aab : Google Play Console 에 올리는 파일
+          files: out/*

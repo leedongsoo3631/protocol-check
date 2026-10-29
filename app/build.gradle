@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+def vc = (System.getenv('VERSION_CODE') ?: '1') as int
+
+android {
+    namespace = 'io.github.leedongsoo3631.protocolcheck'
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = 'io.github.leedongsoo3631.protocolcheck'
+        minSdk = 26
+        targetSdk = 36
+        versionCode = vc
+        versionName = "1.0.${vc}"
+    }
+
+    signingConfigs {
+        release {
+            def ks = System.getenv('KEYSTORE_PATH')
+            if (ks) {
+                storeFile = file(ks)
+                storePassword = System.getenv('KEYSTORE_PASSWORD')
+                keyAlias = System.getenv('KEY_ALIAS')
+                keyPassword = System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            if (System.getenv('KEYSTORE_PATH')) {
+                signingConfig = signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+// 보드 HTML(web/index.html)을 앱 안에 넣는다 — 보드를 고치면 이 파일만 바꾸면 된다
+tasks.register('copyBoard', Copy) {
+    from rootProject.file('web/index.html')
+    into 'src/main/assets'
+}
+preBuild.dependsOn 'copyBoard'
+
+dependencies {
+    implementation 'androidx.activity:activity:1.9.3'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.webkit:webkit:1.12.1'
+}

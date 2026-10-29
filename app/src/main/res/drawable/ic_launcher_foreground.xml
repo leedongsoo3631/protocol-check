@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- 명단 카드 -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M38,30 L70,30 Q76,30 76,36 L76,76 Q76,82 70,82 L38,82 Q32,82 32,76 L32,36 Q32,30 38,30 Z" />
+    <!-- 클립 -->
+    <path android:fillColor="#93C5FD"
+        android:pathData="M45,26 L63,26 Q66,26 66,29 L66,35 L42,35 L42,29 Q42,26 45,26 Z" />
+    <!-- 체크 원 -->
+    <path android:fillColor="#10B981"
+        android:pathData="M54,46 m-16,0 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"
+        android:pathData="M46,46.5 L51.5,52 L62,41" />
+    <!-- 명단 줄 -->
+    <path android:fillColor="#CBD5E1" android:pathData="M40,66 L68,66 L68,70 L40,70 Z" />
+    <path android:fillColor="#CBD5E1" android:pathData="M40,73.5 L60,73.5 L60,77.5 L40,77.5 Z" />
+</vector>

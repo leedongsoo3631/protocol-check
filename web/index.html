@@ -267,7 +267,7 @@ label.btn{display:block;text-align:center;cursor:pointer;-webkit-user-select:non
   <h3>설정</h3>
   <div class="fld"><label>내 이름 (체크 기록에 남습니다)</label><input id="sName" placeholder="예: 이동수"></div>
   <div class="fld" id="sApiWrap"><label>공유 서버 주소 (Apps Script 웹 앱 URL)</label><input id="sApi" placeholder="https://script.google.com/macros/s/.../exec" inputmode="url">
-    <p class="hint">비워 두면 이 휴대폰에만 저장되는 로컬 모드로 동작합니다.</p></div>
+    <p class="hint">중구청 공유 서버가 기본으로 들어 있습니다. 다른 서버를 쓸 때만 바꾸세요.</p></div>
   <p class="hint" id="sInfo"></p>
   <button class="btn" style="width:100%" id="sForget">편집 비밀번호 다시 입력하기</button>
   <div class="row mt"><button class="btn" id="sCancel">취소</button><button class="btn pri" id="sSave">저장</button></div>
@@ -326,7 +326,9 @@ const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(_){return 
 
 /* ---------- 모드 판단 ---------- */
 const LKEY='protocolCheckBoard.v1',PKEY='pcb.prefs',CKEY='pcb.cache';
+const DEFAULT_API='https://script.google.com/macros/s/AKfycbwviCWPu0vtfkL3klSrvl8hLdyvC0TuJv_y9Mh4DLqE_s6Zpnp0MIq2QqYbaGRLDRU/exec';
 let P=Object.assign({cols:3,filter:'all',name:'',pin:'',api:''},ls.get(PKEY)||{});
+if(!P.api)P.api=DEFAULT_API;
 const savePrefs=()=>ls.set(PKEY,P);
 const BAKED=(()=>{const el=$('apiUrl');const u=el?(el.getAttribute('data-u')||''):'';return /^https?:/.test(u)?u:''})();
 const GAS=typeof google!=='undefined'&&google.script&&google.script.run;

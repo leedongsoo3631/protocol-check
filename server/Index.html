@@ -169,6 +169,53 @@ label.btn{display:block;text-align:center;cursor:pointer;-webkit-user-select:non
 #toast.show{display:flex;animation:fade .2s ease}
 #toast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #toast button{background:transparent;border:0;color:#7cb8ff;font-weight:700;font-size:14px;flex:none}
+/* 알림 배너 */
+#alertBar{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:40;width:min(560px,calc(100% - 24px));
+  background:var(--surface);color:var(--ink);border-radius:16px;padding:12px 14px;display:none;gap:12px;align-items:flex-start;
+  box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 0 0 .5px var(--line);cursor:pointer}
+#alertBar.show{display:flex;animation:drop .35s cubic-bezier(.2,.9,.25,1)}
+#alertBar .ic{width:34px;height:34px;border-radius:9px;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+#alertBar .ic.chat{background:var(--accent)}
+#alertBar .ic svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#alertBar b{display:block;font-size:14px;font-weight:600}
+#alertBar span{display:block;font-size:13.5px;color:var(--sub);margin-top:1px;line-height:1.4;word-break:break-all}
+@keyframes drop{from{transform:translate(-50%,-30px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+/* 탭바 배지 */
+nav button{position:relative}
+nav .dot{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;font-weight:700;font-style:normal;display:none;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 0 0 2px var(--bar)}
+nav .dot.on{display:flex}
+/* 채팅 */
+#mChat .sheet{display:flex;flex-direction:column;height:88vh;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+#mChat h3{display:flex;align-items:center;gap:8px}
+#mChat h3 small{font-size:13px;font-weight:500;color:var(--sub)}
+#chatList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px 10px}
+.cm{display:flex;flex-direction:column;align-items:flex-start;max-width:82%}
+.cm.me{align-self:flex-end;align-items:flex-end}
+.cm .who{font-size:11.5px;color:var(--sub);margin:4px 8px 2px}
+.cm .bub{background:var(--surface);color:var(--ink);padding:9px 13px;border-radius:18px;font-size:15px;line-height:1.4;word-break:break-word;white-space:pre-wrap;box-shadow:inset 0 0 0 .5px var(--line)}
+.cm.me .bub{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.cm .tm{font-size:10.5px;color:var(--faint);margin:2px 8px 0;font-variant-numeric:tabular-nums}
+.cm.wait .bub{opacity:.6}
+.chatEmpty{margin:auto;text-align:center;color:var(--sub);font-size:14px;line-height:1.7}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:6px 0 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:0;background:var(--surface);color:var(--accent);font-size:13.5px;font-weight:600;padding:8px 12px;border-radius:999px;box-shadow:inset 0 0 0 .5px var(--line);font-family:inherit}
+.chatIn{display:flex;gap:8px;align-items:flex-end}
+.chatIn textarea{flex:1;min-width:0;border:0;background:var(--surface);color:var(--ink);border-radius:20px;padding:10px 14px;font-size:16px;font-family:inherit;resize:none;max-height:120px;line-height:1.35;box-shadow:inset 0 0 0 .5px var(--line)}
+.chatIn textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.chatIn button{width:42px;height:42px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.chatIn button svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* 설정 스위치 */
+.swl{display:block;margin:4px 0 6px 4px;font-size:13px;color:var(--sub)}
+.swg{border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:inset 0 0 0 .5px var(--line)}
+.sw{display:flex;align-items:center;gap:12px;background:var(--surface);padding:12px 14px;font-size:15px}
+.swg .sw+.sw{border-top:.5px solid var(--line)}
+.sw span{flex:1}
+.sw small{display:block;font-size:12px;color:var(--sub)}
+.sw input{appearance:none;-webkit-appearance:none;width:51px;height:31px;border-radius:16px;background:var(--fill);position:relative;flex:none;transition:background .2s;cursor:pointer;margin:0}
+.sw input::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+.sw input:checked{background:var(--ok)}
+.sw input:checked::after{transform:translateX(20px)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -193,6 +240,7 @@ label.btn{display:block;text-align:center;cursor:pointer;-webkit-user-select:non
   <button id="bMode"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></span><em>편집</em></button>
   <button id="bCols"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></span><em>3열</em></button>
   <button id="bMore"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg></span><em>메뉴</em></button>
+  <button id="bChat"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18.5V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 2.5z"/></svg></span><em>채팅</em><i class="dot" id="chatDot"></i></button>
   <button id="bExport" class="pri"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></svg></span><em>현황 보내기</em></button>
 </nav>
 
@@ -252,6 +300,7 @@ label.btn{display:block;text-align:center;cursor:pointer;-webkit-user-select:non
   <div class="grp">
   <button class="btn" id="mBackup"><span class="ic" style="background:#0a84ff"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19h14"/></svg></span><span class="tx">명단 백업 저장</span></button>
   <div class="pick btn" id="mRestore"><span class="ic" style="background:#5ac8fa"><svg viewBox="0 0 24 24"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H10l2 2h6.5A1.5 1.5 0 0 1 20 9.5v8A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/></svg></span><span class="tx">백업 불러오기</span><input type="file" id="fRestore" accept=".json,application/json"></div>
+  <button class="btn" id="mChatClr"><span class="ic" style="background:#8e8e93"><svg viewBox="0 0 24 24"><path d="M5 18.5V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 2.5z"/></svg></span><span class="tx">채팅 비우기</span></button>
   <button class="btn del" id="mClear"><span class="ic" style="background:#ff3b30"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></span><span class="tx">전체 명단 삭제</span></button>
   </div>
   <div class="grp">
@@ -267,10 +316,24 @@ label.btn{display:block;text-align:center;cursor:pointer;-webkit-user-select:non
   <h3>설정</h3>
   <div class="fld"><label>내 이름 (체크 기록에 남습니다)</label><input id="sName" placeholder="예: 이동수"></div>
   <div class="fld" id="sApiWrap"><label>공유 서버 주소 (Apps Script 웹 앱 URL)</label><input id="sApi" placeholder="https://script.google.com/macros/s/.../exec" inputmode="url">
-    <p class="hint">비워 두면 이 휴대폰에만 저장되는 로컬 모드로 동작합니다.</p></div>
+    <p class="hint">중구청 공유 서버가 기본으로 들어 있습니다. 다른 서버를 쓸 때만 바꾸세요.</p></div>
+  <span class="swl">알림</span>
+  <div class="swg">
+    <label class="sw"><span>진동</span><input type="checkbox" id="sVib"></label>
+    <label class="sw"><span>소리</span><input type="checkbox" id="sSnd"></label>
+    <label class="sw" id="sBgRow"><span>화면이 꺼져 있어도 알림<small>도착·채팅을 휴대폰 알림으로 받습니다</small></span><input type="checkbox" id="sBg"></label>
+  </div>
   <p class="hint" id="sInfo"></p>
   <button class="btn" style="width:100%" id="sForget">편집 비밀번호 다시 입력하기</button>
   <div class="row mt"><button class="btn" id="sCancel">취소</button><button class="btn pri" id="sSave">저장</button></div>
+</div></div>
+
+<!-- 채팅 -->
+<div class="mask" id="mChat"><div class="sheet">
+  <h3>채팅 <small id="chatSub"></small></h3>
+  <div id="chatList"></div>
+  <div class="chips" id="chips"></div>
+  <div class="chatIn"><textarea id="chatTxt" rows="1" placeholder="메시지 입력" maxlength="300"></textarea><button id="chatSend" aria-label="보내기"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button></div>
 </div></div>
 
 <!-- 체크 기록 -->
@@ -308,6 +371,7 @@ label.btn{display:block;text-align:center;cursor:pointer;-webkit-user-select:non
   <button class="btn mt" style="width:100%" id="xClose">닫기</button>
 </div></div>
 
+<div id="alertBar" role="status" aria-live="polite"><div class="ic" id="alertIc"></div><div><b id="alertT"></b><span id="alertM"></span></div></div>
 <div id="toast"><span id="tMsg"></span><button id="tUndo" hidden>취소</button></div>
 
 <script>
@@ -326,7 +390,9 @@ const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(_){return 
 
 /* ---------- 모드 판단 ---------- */
 const LKEY='protocolCheckBoard.v1',PKEY='pcb.prefs',CKEY='pcb.cache';
-let P=Object.assign({cols:3,filter:'all',name:'',pin:'',api:''},ls.get(PKEY)||{});
+const DEFAULT_API='https://script.google.com/macros/s/AKfycbwviCWPu0vtfkL3klSrvl8hLdyvC0TuJv_y9Mh4DLqE_s6Zpnp0MIq2QqYbaGRLDRU/exec';
+let P=Object.assign({cols:3,filter:'all',name:'',pin:'',api:'',vib:true,snd:true,bg:true,chatRead:0},ls.get(PKEY)||{});
+if(!P.api)P.api=DEFAULT_API;
 const savePrefs=()=>ls.set(PKEY,P);
 const BAKED=(()=>{const el=$('apiUrl');const u=el?(el.getAttribute('data-u')||''):'';return /^https?:/.test(u)?u:''})();
 const GAS=typeof google!=='undefined'&&google.script&&google.script.run;
@@ -339,8 +405,10 @@ function phPut(id,prev,d){ls.set('pcb.ph.'+id,{p:prev,d:d||''})}
 let S,ver=0;
 function initData(){
   ver=0;
+  synced=false;
   if(server()){
     S=ls.get(CKEY)||{title:'',date:'',time:'',place:'',members:[]};
+    S.chat=S.chat||[];
     S.members.forEach(m=>m.photo=phGet(m.id,m.prev));
   }else{
     const d=ls.get(LKEY);
@@ -349,7 +417,7 @@ function initData(){
   }
 }
 function saveLocal(){
-  if(server()){ls.set(CKEY,{title:S.title,date:S.date,time:S.time,place:S.place,members:S.members.map(m=>{const o=Object.assign({},m);delete o.photo;return o})});return}
+  if(server()){ls.set(CKEY,{title:S.title,date:S.date,time:S.time,place:S.place,chat:S.chat||[],members:S.members.map(m=>{const o=Object.assign({},m);delete o.photo;return o})});return}
   if(!ls.set(LKEY,S))toast('저장 공간이 부족합니다. 사진 수를 줄여주세요.');
 }
 let mode='check',editId=null,editPhoto='',editPhotoChanged=false,lastBlob=null,xWho='all',xCols=4;
@@ -366,11 +434,23 @@ function syncUI(){
   const el=$('sync');el.className='sync'+(server()?(online?' on':online===false?' off':''):'');
   $('syncTxt').textContent=!server()?'로컬 모드 — 이 휴대폰에만 저장':online?`실시간 공유 중 · ${lastSync} 갱신`:online===false?'연결 끊김 — 자동 재시도 중':'공유 서버 연결 중…';
 }
+let synced=false;
 function applyState(r){
   if(!r||!r.ok||r.same)return;
+  const prev=new Map((S.members||[]).map(m=>[m.id,m]));
+  const lastSeq=(S.chat||[]).reduce((a,c)=>Math.max(a,c.s||0),0);
+  const ev=[];
+  if(synced){
+    r.members.forEach(m=>{const o=prev.get(m.id);if(o&&o.checked!==m.checked)
+      ev.push({k:'chk',t:m.checked?'도착':'도착 체크 해제',m:`${m.pos?m.pos+' ':''}${m.name}`+(m.checked?` · ${m.time}${m.by?' · '+m.by+' 체크':''}`:'')})});
+    (r.chat||[]).forEach(c=>{if(c.s>lastSeq&&c.by!==P.name)ev.push({k:'chat',t:c.by||'채팅',m:c.x})});
+  }
+  synced=true;
+  S.chat=r.chat||[];
   ver=r.ver;S.title=r.meta.title||'';S.date=r.meta.date||'';S.time=r.meta.time||'';S.place=r.meta.place||'';
   S.members=r.members.map(m=>Object.assign(m,{photo:phGet(m.id,m.prev)}));
-  saveLocal();render();loadPhotos();
+  saveLocal();render();loadPhotos();renderChat();
+  if(ev.length)notifyEv(ev);
 }
 async function poll(){
   clearTimeout(pT);
@@ -425,7 +505,7 @@ function ensureName(){
   if(P.name)return true;
   const n=prompt('체크하는 분 이름을 입력하세요 (기록용, 한 번만)');
   if(!n||!n.trim())return false;
-  P.name=n.trim();savePrefs();return true;
+  P.name=n.trim();savePrefs();watch();return true;
 }
 
 /* ---------- 데이터 조작 (로컬/공유 공통) ---------- */
@@ -488,6 +568,7 @@ function render(){
   $('bMode').querySelector('span').innerHTML=mode==='edit'?ICON_DONE:ICON_EDIT;
   $('bMode').querySelector('em').textContent=mode==='edit'?'체크 모드':'편집';
   $('mLog').style.display=server()?'':'none';
+  $('bChat').style.display=server()?'':'none';$('mChatClr').style.display=server()?'':'none';
   $('menuHint').textContent=server()
     ?'공유 모드: 이 링크를 가진 모든 사람에게 체크가 실시간 반영됩니다. 명단 편집은 비밀번호가 필요합니다.'
     :'로컬 모드: 명단·사진·체크는 이 휴대폰에만 저장됩니다. 여러 명이 함께 쓰려면 설정에서 공유 서버를 연결하세요.';
@@ -627,6 +708,7 @@ $('fRestore').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(
 
 /* ---------- 설정 ---------- */
 $('mSet').onclick=()=>{close('mMenu');
+  $('sVib').checked=P.vib!==false;$('sSnd').checked=P.snd!==false;$('sBg').checked=P.bg!==false&&(!AB||!AB.isWatching||AB.isWatching());$('sBgRow').style.display=(AB&&server())?'':'none';
   $('sName').value=P.name;$('sApi').value=P.api;$('sApiWrap').style.display=(GAS||BAKED)?'none':'';
   $('sInfo').textContent=(GAS||BAKED)?'공유 서버에 연결된 보드입니다. 이 페이지 주소(링크)를 함께 쓸 직원에게 카톡으로 보내면 됩니다.':'';
   open('mSetS')};
@@ -634,11 +716,12 @@ $('sCancel').onclick=()=>close('mSetS');
 $('sForget').onclick=()=>{P.pin='';savePrefs();if(mode==='edit'){mode='check';render()}toast('다음 편집 때 비밀번호를 다시 묻습니다')};
 $('sSave').onclick=()=>{
   P.name=$('sName').value.trim();
+  P.vib=$('sVib').checked;P.snd=$('sSnd').checked;P.bg=$('sBg').checked;
   const api=$('sApi').value.trim();
   const changed=!(GAS||BAKED)&&api!==P.api;
   if(changed&&api&&!/^https:\/\/script\.google(usercontent)?\.com\//.test(api)){toast('Apps Script 웹 앱 주소(https://script.google.com/...)를 입력하세요');return}
   if(changed){P.api=api;P.pin='';online=null}
-  savePrefs();close('mSetS');
+  savePrefs();close('mSetS');watch(true);
   if(changed){mode='check';initData();render();poll();
 if(!server()&&!S.title)setTimeout(openInfo,400);toast(api?'공유 서버에 연결합니다':'로컬 모드로 전환했습니다')}
 };
@@ -735,10 +818,85 @@ $('xText').onclick=async()=>{
     try{document.execCommand('copy');toast('명단 텍스트 복사됨')}catch(__){alert(t)}ta.remove()}
 };
 
-window.__pcbBack=()=>{const m=document.querySelector('.mask.show');if(m){m.classList.remove('show');return true}
+/* ---------- 알림 ---------- */
+const AL_CHK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',AL_CHAT='<svg viewBox="0 0 24 24"><path d="M5 18.5V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 2.5z"/></svg>';
+let actx=null,aT=null;
+function unlockAudio(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(_){}}
+document.addEventListener('pointerdown',unlockAudio,{passive:true});
+function beep(kind){
+  if(!actx)return;
+  try{const t0=actx.currentTime;const notes=kind==='chat'?[880,1175]:[1047,1319,1568];
+    notes.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;
+      const s=t0+i*.11;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.22,s+.015);g.gain.exponentialRampToValueAtTime(.001,s+.22);
+      o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+.25)})}catch(_){}
+}
+function notifyEv(ev){
+  const chat=ev.filter(e=>e.k==='chat'),chk=ev.filter(e=>e.k==='chk');
+  const top=chat.length?chat[chat.length-1]:chk[chk.length-1];
+  const quiet=$('mChat').classList.contains('show')&&!chk.length;
+  const more=ev.length>1?` 외 ${ev.length-1}건`:'';
+  $('alertIc').className='ic'+(top.k==='chat'?' chat':'');$('alertIc').innerHTML=top.k==='chat'?AL_CHAT:AL_CHK;
+  $('alertT').textContent=(top.k==='chat'?'💬 ':'')+top.t+more;$('alertM').textContent=top.m;
+  $('alertBar').onclick=()=>{$('alertBar').classList.remove('show');if(top.k==='chat')openChat()};
+  if(!quiet){$('alertBar').classList.remove('show');void $('alertBar').offsetWidth;$('alertBar').classList.add('show');
+  clearTimeout(aT);aT=setTimeout(()=>$('alertBar').classList.remove('show'),5000)}
+  const kind=chat.length?'chat':'chk';
+  if(AB&&AB.alert){try{AB.alert(P.vib!==false,P.snd!==false,kind)}catch(_){}}
+  else{if(P.vib!==false&&navigator.vibrate)try{navigator.vibrate(kind==='chat'?[60,80,60]:[120,60,120])}catch(_){}
+    if(P.snd!==false)beep(kind)}
+}
+function watch(force){
+  if(!AB||!AB.startWatch)return;
+  try{const url=BAKED||P.api;
+    if(server()&&url&&P.bg!==false)AB.startWatch(url,P.name||'',P.vib!==false,P.snd!==false,!!force);else AB.stopWatch()}catch(_){}
+}
+
+/* ---------- 채팅 ---------- */
+const QUICK=['도착하셨습니다','입장 중입니다','착석 완료','곧 행사 시작합니다','의전 대기 중','확인했습니다'];
+$('chips').innerHTML=QUICK.map(q=>`<button type="button">${q}</button>`).join('');
+$('chips').onclick=e=>{const b=e.target.closest('button');if(b)sendChat(b.textContent)};
+let pendingChat=[];
+function unread(){return (S.chat||[]).filter(c=>c.s>(P.chatRead||0)&&c.by!==P.name).length}
+function renderChat(){
+  const n=unread(),d=$('chatDot');
+  const isOpen=$('mChat').classList.contains('show');
+  d.textContent=n>99?'99+':n;d.classList.toggle('on',n>0&&!isOpen);
+  if(!isOpen)return;
+  const list=$('chatList'),atBottom=list.scrollHeight-list.scrollTop-list.clientHeight<60;
+  const msgs=(S.chat||[]).concat(pendingChat);
+  $('chatSub').textContent=online===false?'연결 끊김':'담당자 전체';
+  list.innerHTML=msgs.length?msgs.map(c=>{const me=c.by===P.name;
+    return `<div class="cm${me?' me':''}${c.wait?' wait':''}">${me?'':`<div class="who">${esc(c.by||'이름 없음')}</div>`}<div class="bub">${esc(c.x)}</div><div class="tm">${c.wait?'보내는 중':esc(c.t)}</div></div>`}).join('')
+    :'<div class="chatEmpty">아직 메시지가 없습니다.<br>아래 빠른 문구를 누르거나 직접 입력하세요.</div>';
+  if(atBottom||list.dataset.first!=='1'){list.scrollTop=list.scrollHeight;list.dataset.first='1'}
+  const last=(S.chat||[]).reduce((a,c)=>Math.max(a,c.s||0),0);
+  if(last>(P.chatRead||0)){P.chatRead=last;savePrefs()}
+}
+function openChat(){
+  if(!server())return;
+  $('chatList').dataset.first='0';open('mChat');renderChat();
+  setTimeout(()=>{$('chatList').scrollTop=$('chatList').scrollHeight},50);
+}
+async function sendChat(text){
+  text=String(text||'').trim();if(!text)return;
+  if(!ensureName())return;
+  const tmp={s:0,t:hm(),by:P.name,x:text,wait:true};pendingChat.push(tmp);renderChat();
+  $('chatList').scrollTop=$('chatList').scrollHeight;
+  const ok=await write({a:'chat',text,by:P.name,time:hm()});
+  pendingChat=pendingChat.filter(c=>c!==tmp);renderChat();
+  if(!ok){$('chatTxt').value=text;toast('메시지를 보내지 못했습니다')}
+}
+$('bChat').onclick=openChat;
+$('chatSend').onclick=()=>{const t=$('chatTxt').value;$('chatTxt').value='';$('chatTxt').style.height='';sendChat(t)};
+$('chatTxt').addEventListener('input',e=>{const t=e.target;t.style.height='auto';t.style.height=Math.min(t.scrollHeight,120)+'px'});
+$('chatTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('chatSend').click()}});
+$('mChat').addEventListener('click',e=>{if(e.target===$('mChat'))setTimeout(renderChat,0)});
+$('mChatClr').onclick=async()=>{if(!(await ensurePin()))return;if(!confirm('모든 채팅을 지울까요?'))return;close('mMenu');write({a:'chatclear'})};
+
+window.__pcbBack=()=>{const m=document.querySelector('.mask.show');if(m){m.classList.remove('show');renderChat();return true}
   if(mode==='edit'){mode='check';render();return true}return false};
 if(AB){$('mAppB').style.display='none';document.querySelectorAll('#xOut .hint').forEach(e=>e.textContent='공유를 누르면 카톡을 골라 바로 보낼 수 있습니다.');$('xSave').textContent='갤러리에 저장'}
-initData();render();poll();
+initData();render();renderChat();poll();watch();
 if(!server()&&!S.title)setTimeout(openInfo,400);
 })();
 </script>

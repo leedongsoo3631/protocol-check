@@ -4,7 +4,13 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
@@ -52,6 +58,7 @@ public class MainActivity extends ComponentActivity {
     private WebView web;
     private ValueCallback<Uri[]> fileCallback;
     private ActivityResultLauncher<Intent> picker;
+    private ActivityResultLauncher<String> notifPerm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +100,11 @@ public class MainActivity extends ComponentActivity {
             fileCallback.onReceiveValue(uris);
             fileCallback = null;
         });
+
+        notifPerm = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+            if (!granted) Toast.makeText(this, "알림을 허용해야 화면이 꺼져 있을 때 알림을 받을 수 있습니다", Toast.LENGTH_LONG).show();
+        });
+        WatchService.channels(this);
 
         WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
                 .setDomain(HOST)
@@ -167,6 +179,25 @@ public class MainActivity extends ComponentActivity {
                 });
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        WatchService.appVisible = true;
+    }
+
+    @Override
+    protected void onPause() {
+        WatchService.appVisible = false;
+        super.onPause();
+    }
+
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS);
+        }
     }
 
     @Override
@@ -251,6 +282,59 @@ public class MainActivity extends ComponentActivity {
             } catch (Exception e) {
                 return false;
             }
+        }
+
+        /** 화면을 보고 있을 때의 알림: 진동 + 알림음 */
+        @JavascriptInterface
+        public void alert(boolean vib, boolean snd, String kind) {
+            runOnUiThread(() -> {
+                try {
+                    if (vib) {
+                        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                        long[] pat = "chat".equals(kind) ? new long[]{0, 60, 80, 60} : new long[]{0, 140, 70, 140};
+                        if (v != null) v.vibrate(VibrationEffect.createWaveform(pat, -1));
+                    }
+                    if (snd) {
+                        Ringtone r = RingtoneManager.getRingtone(MainActivity.this,
+                                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+                        if (r != null) r.play();
+                    }
+                } catch (Exception ignored) {
+                }
+            });
+        }
+
+        /** 화면이 꺼져 있어도 알림 받기 시작. force=false 이면 사용자가 알림에서 끈 상태를 존중한다 */
+        @JavascriptInterface
+        public void startWatch(String api, String name, boolean vib, boolean snd, boolean force) {
+            runOnUiThread(() -> {
+                boolean off = getSharedPreferences("watch", MODE_PRIVATE).getBoolean("off", false);
+                if (off && !force) {
+                    getSharedPreferences("watch", MODE_PRIVATE).edit()
+                            .putString("api", api).putString("name", name)
+                            .putBoolean("vib", vib).putBoolean("snd", snd).apply();
+                    return;
+                }
+                askNotificationPermission();
+                try {
+                    WatchService.start(MainActivity.this, api, name, vib, snd);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "알림 서비스를 시작하지 못했습니다", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void stopWatch() {
+            runOnUiThread(() -> {
+                getSharedPreferences("watch", MODE_PRIVATE).edit().putBoolean("off", true).apply();
+                WatchService.stop(MainActivity.this);
+            });
+        }
+
+        @JavascriptInterface
+        public boolean isWatching() {
+            return !getSharedPreferences("watch", MODE_PRIVATE).getBoolean("off", false);
         }
 
         @JavascriptInterface

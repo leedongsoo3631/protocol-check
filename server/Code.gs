@@ -5,6 +5,7 @@
 const EDIT_PIN = '0000';        // ← 명단 편집 비밀번호 (반드시 바꾸세요)
 const SHEET = '명단';
 const LOGSHEET = '체크기록';
+const CHATSHEET = '채팅';
 const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo'];
 
 /* 보드 화면 제공 */
@@ -38,7 +39,7 @@ function api(q) {
   if (q.a === 'log') return { ok: true, log: log_() };
   if (q.a === 'pin') return String(q.pin) === String(EDIT_PIN) ? { ok: true } : { ok: false, error: 'pin' };
 
-  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear'];
+  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear'];
   if (editOps.indexOf(q.a) >= 0 && String(q.pin) !== String(EDIT_PIN)) return { ok: false, error: 'pin' };
 
   const lock = LockService.getScriptLock();
@@ -92,6 +93,20 @@ function api(q) {
     } else if (q.a === 'clear') {
       if (data.length) sh.deleteRows(2, data.length);
 
+    } else if (q.a === 'chat') {
+      const text = String(q.text || '').trim().slice(0, 300);
+      if (!text) return { ok: false, error: '내용 없음' };
+      const cs = chatSheet_();
+      const p0 = PropertiesService.getScriptProperties();
+      const seq = (Number(p0.getProperty('chatSeq')) || 0) + 1;
+      p0.setProperty('chatSeq', String(seq));
+      cs.appendRow([String(seq), String(q.time || ''), String(q.by || ''), text,
+        Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss')]);
+
+    } else if (q.a === 'chatclear') {
+      const cs = chatSheet_();
+      if (cs.getLastRow() > 1) cs.deleteRows(2, cs.getLastRow() - 1);
+
     } else if (q.a === 'meta') {
       PropertiesService.getScriptProperties().setProperties({ title: String(q.title || ''), date: String(q.date || ''), time: String(q.time || ''), place: String(q.place || '') });
 
@@ -123,7 +138,7 @@ function ss_() {
 /* 처음 한 번 실행: 권한 승인 + 저장용 시트 만들기 (편집기에서 ▶실행) */
 function setup() {
   const s = ss_();
-  sheet_(); logSheet_();
+  sheet_(); logSheet_(); chatSheet_();
   Logger.log('준비 완료. 저장용 시트: ' + s.getUrl());
 }
 
@@ -155,7 +170,7 @@ function state_(ver) {
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
     id: o.id, pos: o.pos, name: o.name, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
-  return { ok: true, ver: cur, meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '' }, members: members };
+  return { ok: true, ver: cur, chat: chat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '' }, members: members };
 }
 
 function photos_(ids) {
@@ -194,4 +209,26 @@ function log_() {
   if (n < 1) return [];
   const k = Math.min(n, 100);
   return sh.getRange(sh.getLastRow() - k + 1, 1, k, 5).getDisplayValues().reverse();
+}
+
+function chatSheet_() {
+  const ss = ss_();
+  let sh = ss.getSheetByName(CHATSHEET);
+  if (!sh) {
+    sh = ss.insertSheet(CHATSHEET);
+    sh.getRange('A:E').setNumberFormat('@');
+    sh.getRange(1, 1, 1, 5).setValues([['번호', '시각', '보낸사람', '내용', '서버기록']]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+/* 최근 채팅 50개 */
+function chat_() {
+  const sh = chatSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return [];
+  const k = Math.min(n, 50);
+  return sh.getRange(sh.getLastRow() - k + 1, 1, k, 4).getDisplayValues()
+    .map(x => ({ s: Number(x[0]) || 0, t: x[1], by: x[2], x: x[3] }));
 }

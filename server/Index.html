@@ -278,8 +278,14 @@ nav .dot.on{display:flex}
 .pr.cur b,.pr.cur span{color:var(--ok)}
 .pr.done b,.pr.done span{color:var(--faint)}
 #plImg{width:100%;border-radius:10px;display:block;cursor:zoom-in}
-#mImg{align-items:center;background:rgba(0,0,0,.92);z-index:50}
-#imgFull{max-width:100%;max-height:100%;object-fit:contain}
+#mImg{align-items:center;background:#000;z-index:50}
+#imgStage{position:absolute;inset:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+#imgFull{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;max-width:none;-webkit-user-drag:none;pointer-events:none}
+#imgFull.anim{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+#imgX{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:20px;z-index:2;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#imgZ{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:2}
+#imgZ button{width:44px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:20px;font-weight:600;font-family:inherit;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#imgZ span{align-self:center;color:rgba(255,255,255,.75);font-size:12.5px;padding:0 6px;white-space:nowrap}
 /* 일정 수정 */
 #peMemo{min-height:110px}
 .per{display:grid;grid-template-columns:74px minmax(0,1fr) 36px;gap:6px;align-items:center;margin-bottom:8px}
@@ -496,7 +502,7 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   <p class="hint" id="plEmpty">아직 등록된 일정·메모가 없습니다.</p>
   <div class="row mt"><button class="btn" id="plClose">닫기</button><button class="btn pri" id="plEdit">수정</button></div>
 </div></div>
-<div class="mask" id="mImg"><img id="imgFull" alt="식순 사진 크게 보기"></div>
+<div class="mask" id="mImg"><div id="imgStage"><img id="imgFull" alt="식순 사진 크게 보기"></div><button id="imgX" aria-label="닫기">✕</button><div id="imgZ"><button id="imgOut" aria-label="축소">−</button><span>두 손가락·두 번 탭으로 확대</span><button id="imgIn" aria-label="확대">＋</button></div></div>
 
 <!-- 일정·메모 수정 -->
 <div class="mask" id="mPlanE"><div class="sheet">
@@ -1312,8 +1318,39 @@ function openPlan(){
   renderPlan();open('mPlan');
 }
 $('planBar').onclick=openPlan;
-$('plImg').onclick=()=>{$('imgFull').src=$('plImg').src;open('mImg')};
-$('mImg').onclick=()=>close('mImg');
+/* 사진 확대 보기: 두 손가락 확대, 끌어서 이동, 두 번 탭 확대/원래대로, PC는 휠 */
+const zv={s:1,x:0,y:0,w:0,h:0,W:0,H:0,pts:new Map(),g:null,tap:0};
+function zApply(anim){const im=$('imgFull');im.classList.toggle('anim',!!anim);im.style.transform=`translate(${zv.x}px,${zv.y}px) scale(${zv.s})`}
+function zClamp(){const sw=zv.w*zv.s,sh=zv.h*zv.s;
+  zv.x=sw<=zv.W?(zv.W-sw)/2:Math.min(0,Math.max(zv.W-sw,zv.x));
+  zv.y=sh<=zv.H?(zv.H-sh)/2:Math.min(0,Math.max(zv.H-sh,zv.y))}
+function zFit(){const st=$('imgStage'),im=$('imgFull');zv.W=st.clientWidth;zv.H=st.clientHeight;
+  const nw=im.naturalWidth||1,nh=im.naturalHeight||1,r=Math.min(zv.W/nw,zv.H/nh);
+  zv.w=nw*r;zv.h=nh*r;im.style.width=zv.w+'px';im.style.height=zv.h+'px';zv.s=1;zClamp();zApply()}
+function zTo(ns,px,py,anim){ns=Math.min(8,Math.max(1,ns));zv.x=px-(px-zv.x)*ns/zv.s;zv.y=py-(py-zv.y)*ns/zv.s;zv.s=ns;zClamp();zApply(anim)}
+function openZoom(src){const im=$('imgFull');im.onload=()=>zFit();im.src=src;open('mImg');if(im.complete)requestAnimationFrame(zFit)}
+(()=>{const st=$('imgStage'),pos=e=>{const r=st.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+  const start=()=>{const p=[...zv.pts.values()];
+    if(p.length===1)zv.g={k:1,x0:p[0].x,y0:p[0].y,tx:zv.x,ty:zv.y,moved:false};
+    else if(p.length>=2){const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)||1;zv.g={k:2,d0:d,s0:zv.s,mx:(p[0].x+p[1].x)/2,my:(p[0].y+p[1].y)/2,tx:zv.x,ty:zv.y,moved:true}}};
+  st.addEventListener('pointerdown',e=>{st.setPointerCapture(e.pointerId);zv.pts.set(e.pointerId,pos(e));start()});
+  st.addEventListener('pointermove',e=>{if(!zv.pts.has(e.pointerId)||!zv.g)return;zv.pts.set(e.pointerId,pos(e));const p=[...zv.pts.values()],g=zv.g;
+    if(g.k===1&&p.length===1){const dx=p[0].x-g.x0,dy=p[0].y-g.y0;if(Math.abs(dx)+Math.abs(dy)>6)g.moved=true;zv.x=g.tx+dx;zv.y=g.ty+dy;zClamp();zApply()}
+    else if(g.k===2&&p.length>=2){const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),mx=(p[0].x+p[1].x)/2,my=(p[0].y+p[1].y)/2;
+      const ns=Math.min(8,Math.max(1,g.s0*d/g.d0));zv.x=mx-(g.mx-g.tx)*ns/g.s0;zv.y=my-(g.my-g.ty)*ns/g.s0;zv.s=ns;zClamp();zApply()}});
+  const end=e=>{if(!zv.pts.has(e.pointerId))return;const g=zv.g,p=zv.pts.get(e.pointerId);zv.pts.delete(e.pointerId);
+    if(g&&g.k===1&&!g.moved&&zv.pts.size===0){const now=Date.now();
+      if(now-zv.tap<320){zv.tap=0;if(zv.s>1.05){zv.s=1;zClamp();zApply(true)}else zTo(2.5,p.x,p.y,true)}else zv.tap=now}
+    zv.g=null;if(zv.pts.size)start()};
+  st.addEventListener('pointerup',end);st.addEventListener('pointercancel',end);
+  st.addEventListener('wheel',e=>{e.preventDefault();const p=pos(e);zTo(zv.s*(e.deltaY<0?1.2:1/1.2),p.x,p.y)},{passive:false});
+  $('imgIn').onclick=()=>zTo(zv.s*1.6,zv.W/2,zv.H/2,true);
+  $('imgOut').onclick=()=>zTo(zv.s/1.6,zv.W/2,zv.H/2,true);
+  $('imgX').onclick=()=>close('mImg');
+  addEventListener('resize',()=>{if($('mImg').classList.contains('show'))zFit()});
+})();
+$('plImg').onclick=()=>openZoom($('plImg').src);
+$('peImg').onclick=()=>{if($('peImg').src)openZoom($('peImg').src)};
 $('plClose').onclick=()=>close('mPlan');
 $('plEdit').onclick=()=>{close('mPlan');openPlanEdit()};
 

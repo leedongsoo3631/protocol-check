@@ -331,6 +331,15 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
 .saI em{font-style:normal;font-size:12px;color:var(--sub)}
 .saI.on{background:var(--accent-soft)}.saI.on em{color:var(--accent);font-weight:600}
 .ssg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#ssGridW{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--surface);border-radius:12px;padding:8px;box-shadow:inset 0 0 0 .5px var(--line);max-height:46vh;overflow-y:auto}
+#ssGrid{display:inline-flex;flex-direction:column;gap:4px}
+.ssHead,.ssRow{display:flex;gap:4px;align-items:center}
+.ssHead b,.ssRow b{flex:none;width:34px;position:sticky;left:-8px;z-index:1;background:var(--surface);align-self:stretch;display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--sub);font-weight:700;text-align:center}
+.ssHead i{flex:none;width:68px;font-style:normal;font-size:11px;color:var(--faint);text-align:center}
+.ssHead em,.ssRow em{flex:none;width:10px}
+.ssRow input{flex:none;width:68px;border:0;border-radius:8px;background:var(--fill);color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;padding:9px 4px;text-align:center;min-width:0}
+.ssRow input::placeholder{color:var(--faint);font-weight:400;font-size:11px}
+.ssRow input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent);background:var(--surface)}
 #seatPrev{width:100%;border-radius:10px;display:block;margin-bottom:10px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -528,20 +537,22 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
 
 <!-- 좌석 설정 -->
 <div class="mask" id="mSeatS"><div class="sheet">
-  <h3>좌석배치 설정</h3>
+  <h3>좌석배치도 만들기·수정</h3>
   <div class="ssg">
-    <div class="fld"><label for="ssR">열 수 (무대 앞부터)</label><input id="ssR" type="number" inputmode="numeric" min="1" max="30"></div>
-    <div class="fld"><label for="ssC">한 열 자리 수</label><input id="ssC" type="number" inputmode="numeric" min="1" max="40"></div>
+    <div class="fld"><label for="ssR">세로 (줄 수)</label><input id="ssR" type="number" inputmode="numeric" min="1" max="30"></div>
+    <div class="fld"><label for="ssC">가로 (한 줄 좌석 수)</label><input id="ssC" type="number" inputmode="numeric" min="1" max="40"></div>
   </div>
-  <div class="fld"><label for="ssGap">통로 위치 (선택)</label><input id="ssGap" placeholder="예: 3, 7 → 3번·7번 자리 뒤에 통로"></div>
-  <div class="fld"><label for="ssStage">앞쪽 표시</label><input id="ssStage" placeholder="무대" maxlength="20"></div>
-  <div class="fld"><label>서열순 자동 배치 (명단 순서대로)</label>
-    <div class="seg" id="ssDir"><button data-v="right" class="on">가운데부터</button><button data-v="left">단상석</button><button data-v="ltr">왼쪽부터</button></div>
-    <p class="hint">가운데부터: 1위 가운데, 2위는 1위의 오른쪽, 3위는 왼쪽 순으로 번갈아 앉힙니다(무대를 바라보는 자리 기준). 단상석은 청중을 바라보므로 좌우가 반대입니다. 앞 열부터 채우고, 글자로 표시한 자리(기자석 등)는 건너뜁니다.</p>
-    <button class="btn pri" style="width:100%" id="ssAuto">서열순 자동 배치</button>
+  <div class="ssg">
+    <div class="fld"><label for="ssGap">통로 (선택)</label><input id="ssGap" placeholder="예: 3, 7번 뒤"></div>
+    <div class="fld"><label for="ssStage">앞쪽 표시</label><input id="ssStage" placeholder="무대" maxlength="20"></div>
   </div>
-  <div class="row mt"><button class="btn" id="ssClear">배치 비우기</button><button class="btn del" id="ssDel">배치도 삭제</button></div>
-  <div class="row mt"><button class="btn" id="ssCancel">취소</button><button class="btn pri" id="ssSave">설정만 저장</button></div>
+  <div class="fld"><label>좌석마다 이름 입력</label>
+    <div id="ssGridW"><div id="ssGrid"></div></div>
+    <datalist id="ssNames"></datalist>
+    <p class="hint">명단에 있는 이름을 쓰면 도착 체크와 연결되어 도착 시 초록색으로 바뀝니다. 명단에 없는 이름이나 '기자석' 같은 글자는 회색으로 표시됩니다.</p>
+  </div>
+  <div class="row mt"><button class="btn" id="ssClear">이름 모두 지우기</button><button class="btn del" id="ssDel">배치도 삭제</button></div>
+  <div class="row mt"><button class="btn" id="ssCancel">취소</button><button class="btn pri" id="ssSave">저장</button></div>
 </div></div>
 
 <!-- 자리 지정 -->
@@ -550,8 +561,8 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   <div class="fld"><input id="saFind" placeholder="이름·직위 검색"></div>
   <div id="saList"></div>
   <p class="hint">다른 자리에 앉은 사람을 고르면 두 사람 자리가 맞바뀝니다.</p>
-  <div class="fld mt"><label for="saLabel">사람 대신 글자로 표시</label>
-    <div class="row"><input id="saLabel" placeholder="예: 기자석, 예비석" maxlength="8" style="flex:2"><button class="btn" id="saLabelGo">표시</button></div></div>
+  <div class="fld mt"><label for="saLabel">명단에 없는 이름·글자 직접 입력</label>
+    <div class="row"><input id="saLabel" placeholder="예: 홍길동, 기자석" maxlength="12" style="flex:2"><button class="btn" id="saLabelGo">표시</button></div></div>
   <div class="row mt"><button class="btn del" id="saEmpty">빈 자리로</button><button class="btn" id="saClose">닫기</button></div>
 </div></div>
 
@@ -1368,7 +1379,7 @@ function fileToImage(file,maxW,maxLen){return new Promise((res,rej)=>{
 /* ---------- 좌석배치도 ---------- */
 // S.seat = {r:열 수, c:한 열 자리 수, gap:[통로가 들어갈 자리 번호 뒤], stage:'무대', a:{'열-번':'인물id' 또는 '#글자'}}
 const seatKey=(r,c)=>r+'-'+c;
-function seatOf(id){const s=S.seat;if(!s||!s.a)return'';for(const k in s.a)if(s.a[k]===id){const [r,c]=k.split('-');return `${r}열 ${c}번`}return''}
+function seatOf(id){const s=S.seat;if(!s||!s.a)return'';for(const k in s.a)if(s.a[k]===id){const [r,c]=k.split('-');return `${r}줄 ${c}번`}return''}
 function seatMembers(){const s=S.seat;if(!s)return new Map();const mm=new Map(S.members.map(m=>[m.id,m])),o=new Map();
   for(const k in s.a||{}){const v=s.a[k];if(v&&v[0]!=='#'&&mm.has(v))o.set(k,mm.get(v))}return o}
 function renderSeat(){
@@ -1378,12 +1389,12 @@ function renderSeat(){
   document.querySelector('.editnote').textContent=on?'편집 모드 — 자리를 눌러 인물을 지정하세요':'편집 모드 — 카드를 눌러 수정하세요';
   if(!on)return;
   const s=S.seat;
-  if(!s||!s.r||!s.c){$('svBody').innerHTML=`<button class="svNew" id="svNew"><b>＋</b>좌석배치도 만들기<small>열·자리 수를 정하고 서열순으로 자동 배치합니다</small></button>`;$('svFree').innerHTML='';$('svTool').hidden=true;return}
+  if(!s||!s.r||!s.c){$('svBody').innerHTML=`<button class="svNew" id="svNew"><b>＋</b>좌석배치도 만들기<small>세로·가로 좌석 수를 정하고 자리마다 이름을 넣습니다</small></button>`;$('svFree').innerHTML='';$('svTool').hidden=true;return}
   $('svTool').hidden=false;
   const by=seatMembers(),gap=new Set(s.gap||[]);
   let h=`<div class="svStage">${esc(s.stage||'무대')}</div>`;
   for(let r=1;r<=s.r;r++){
-    h+=`<div class="svRow"><b>${r}열</b>`;
+    h+=`<div class="svRow"><b>${r}줄</b>`;
     for(let c=1;c<=s.c;c++){
       const k=seatKey(r,c),m=by.get(k),v=(s.a||{})[k];
       if(m)h+=`<button class="st${m.checked?' ck':''}" data-k="${k}"><i>${c}</i><small>${esc(m.pos)}</small><span>${esc(m.name)}</span></button>`;
@@ -1423,7 +1434,7 @@ $('svExp').onclick=()=>openSeatExport();
 let saKey='';
 async function openSeatAssign(k){
   if(!(await ensurePin()))return;
-  saKey=k;const [r,c]=k.split('-');$('saTitle').textContent=`${r}열 ${c}번 자리`;
+  saKey=k;const [r,c]=k.split('-');$('saTitle').textContent=`${r}줄 ${c}번 자리`;
   const cur=(S.seat.a||{})[k]||'';$('saLabel').value=cur[0]==='#'?cur.slice(1):'';$('saFind').value='';
   renderSeatAssign();open('mSeatA');
 }
@@ -1444,47 +1455,51 @@ $('saList').onclick=e=>{
 };
 $('saEmpty').onclick=()=>{const s=cloneSeat();delete s.a[saKey];opSeat(s);close('mSeatA')};
 $('saLabelGo').onclick=()=>{const t=$('saLabel').value.trim();if(!t){toast('표시할 글자를 입력하세요');return}
-  const s=cloneSeat();s.a[saKey]='#'+t.slice(0,8);opSeat(s);close('mSeatA')};
+  const s=cloneSeat();s.a[saKey]=nameToVal(t);opSeat(s);close('mSeatA')};
 $('saClose').onclick=()=>close('mSeatA');
 
 /* 좌석 설정 */
-let ssDir='right';
+// 이름 → 명단 인물 id (이름 또는 "직위 이름"이 같으면 연결), 없으면 '#글자'
+function nameToVal(t){t=t.trim();if(!t)return'';const n=t.replace(/\s+/g,' ');
+  const m=S.members.find(x=>x.name===n)||S.members.find(x=>((x.pos?x.pos+' ':'')+x.name)===n);return m?m.id:'#'+n.slice(0,12)}
+function valToName(v){if(!v)return'';if(v[0]==='#')return v.slice(1);const m=S.members.find(x=>x.id===v);return m?m.name:''}
+let ssVals={};
+function ssGridSync(){document.querySelectorAll('#ssGrid input').forEach(i=>ssVals[i.dataset.k]=i.value)}
+function renderSsGrid(){
+  ssGridSync();
+  const r=Math.min(30,Math.max(1,parseInt($('ssR').value)||1)),c=Math.min(40,Math.max(1,parseInt($('ssC').value)||1));
+  const gap=new Set(($('ssGap').value.match(/\d+/g)||[]).map(Number));
+  let h='<div class="ssHead"><b></b>';for(let j=1;j<=c;j++)h+=`<i>${j}</i>`+(gap.has(j)&&j<c?'<em></em>':'');h+='</div>';
+  for(let i=1;i<=r;i++){h+=`<div class="ssRow"><b>${i}줄</b>`;
+    for(let j=1;j<=c;j++){const k=seatKey(i,j);h+=`<input data-k="${k}" list="ssNames" value="${esc(ssVals[k]||'')}" placeholder="${j}" autocomplete="off">`+(gap.has(j)&&j<c?'<em></em>':'')}
+    h+='</div>'}
+  $('ssGrid').innerHTML=h;
+}
 async function openSeatSet(){
   if(!(await ensurePin()))return;
   const s=S.seat||{};
-  $('ssR').value=s.r||3;$('ssC').value=s.c||Math.min(9,Math.max(5,Math.ceil(S.members.length/3)));
+  $('ssR').value=s.r||4;$('ssC').value=s.c||6;
   $('ssGap').value=(s.gap||[]).join(', ');$('ssStage').value=s.stage||'무대';
-  open('mSeatS');
+  ssVals={};for(const k in s.a||{})ssVals[k]=valToName(s.a[k]);
+  $('ssGrid').innerHTML='';
+  $('ssNames').innerHTML=S.members.map(m=>`<option value="${esc(m.name)}">${esc(m.pos)}</option>`).join('');
+  renderSsGrid();open('mSeatS');
 }
-document.querySelectorAll('#ssDir button').forEach(b=>b.onclick=()=>{ssDir=b.dataset.v;document.querySelectorAll('#ssDir button').forEach(x=>x.classList.toggle('on',x===b))});
+['ssR','ssC','ssGap'].forEach(id=>$(id).addEventListener('input',renderSsGrid));
 function readSeatSet(){
-  const r=Math.min(30,Math.max(1,parseInt($('ssR').value)||0)),c=Math.min(40,Math.max(1,parseInt($('ssC').value)||0));
+  ssGridSync();
+  const r=Math.min(30,Math.max(1,parseInt($('ssR').value)||1)),c=Math.min(40,Math.max(1,parseInt($('ssC').value)||1));
   const gap=[...new Set(($('ssGap').value.match(/\d+/g)||[]).map(Number).filter(n=>n>0&&n<c))].sort((a,b)=>a-b);
-  const s=cloneSeat();s.r=r;s.c=c;s.gap=gap;s.stage=$('ssStage').value.trim()||'무대';
-  for(const k in s.a){const [a,b]=k.split('-').map(Number);if(a>r||b>c)delete s.a[k]}
+  const s={r,c,gap,stage:$('ssStage').value.trim()||'무대',a:{}};
+  for(const k in ssVals){const [a,b]=k.split('-').map(Number);if(a>r||b>c)continue;const v=nameToVal(ssVals[k]||'');if(v)s.a[k]=v}
   return s;
 }
-// 가운데부터: 1위 가운데, 2위 1위의 오른쪽, 3위 왼쪽 … (dir='left'면 반대)
-function centerOrder(C,dir){
-  const o=[];
-  if(dir==='ltr'){for(let c=1;c<=C;c++)o.push(c);return o}
-  const right=dir!=='left',s=right?Math.ceil(C/2):Math.floor(C/2)+1;o.push(s);
-  for(let d=1;o.length<C;d++){const a=right?s+d:s-d,b=right?s-d:s+d;if(a>=1&&a<=C)o.push(a);if(b>=1&&b<=C)o.push(b)}
-  return o;
-}
-$('ssAuto').onclick=async()=>{
-  const s=readSeatSet();
-  const placed=S.members.some(m=>Object.values(s.a).includes(m.id));
-  if(placed&&!confirm('지금 배치된 자리를 지우고 명단 순서(서열)대로 다시 배치할까요?\n(글자로 표시한 자리는 그대로 둡니다)'))return;
-  for(const k in s.a)if(s.a[k][0]!=='#')delete s.a[k];
-  const order=centerOrder(s.c,ssDir),q=S.members.slice();let n=0;
-  for(let r=1;r<=s.r&&q.length;r++)for(const c of order){if(!q.length)break;const k=seatKey(r,c);if(s.a[k])continue;s.a[k]=q.shift().id;n++}
-  close('mSeatS');P.view='seat';savePrefs();$('svScroll').dataset.c='';
-  await opSeat(s);
-  toast(q.length?`${n}명 배치 · 자리가 부족해 ${q.length}명은 미지정`:`${n}명을 서열순으로 배치했습니다`);
-};
-$('ssSave').onclick=()=>{const s=readSeatSet();close('mSeatS');P.view='seat';savePrefs();$('svScroll').dataset.c='';opSeat(s);toast('좌석 설정을 저장했습니다')};
-$('ssClear').onclick=()=>{if(!confirm('배치된 자리를 모두 비울까요?'))return;const s=readSeatSet();s.a={};close('mSeatS');opSeat(s);toast('배치를 비웠습니다')};
+$('ssSave').onclick=()=>{
+  const s=readSeatSet(),ids=Object.values(s.a).filter(v=>v[0]!=='#');
+  if(new Set(ids).size<ids.length&&!confirm('같은 사람이 두 자리 이상에 들어 있습니다. 그대로 저장할까요?'))return;
+  close('mSeatS');P.view='seat';savePrefs();$('svScroll').dataset.c='';opSeat(s);
+  const n=Object.keys(s.a).length;toast(`좌석배치도를 저장했습니다 (이름 ${n}석)`)};
+$('ssClear').onclick=()=>{if(!confirm('입력한 이름을 모두 지울까요?'))return;ssVals={};document.querySelectorAll('#ssGrid input').forEach(i=>i.value='')};
 $('ssDel').onclick=()=>{if(!confirm('좌석배치도를 삭제할까요?'))return;close('mSeatS');opSeat(null);toast('좌석배치도를 삭제했습니다')};
 $('ssCancel').onclick=()=>close('mSeatS');
 
@@ -1508,7 +1523,7 @@ async function makeSeatImage(){
   x.fillStyle='#3a3a3c';rr(x,X0+RL,HH,gridW-RL,ST-8,14);x.fill();x.fillStyle='#fff';x.font=`700 30px ${FF}`;x.textAlign='center';x.fillText(s.stage||'무대',X0+RL+(gridW-RL)/2,HH+(ST-8)/2);
   for(let r=1;r<=s.r;r++){
     const Y=HH+ST+16+(r-1)*(CH+G);
-    x.fillStyle='#6e6e73';x.font=`700 26px ${FF}`;x.textAlign='center';x.fillText(r+'열',X0+RL/2-4,Y+CH/2);
+    x.fillStyle='#6e6e73';x.font=`700 26px ${FF}`;x.textAlign='center';x.fillText(r+'줄',X0+RL/2-4,Y+CH/2);
     let X=X0+RL;
     for(let cc=1;cc<=s.c;cc++){
       const k=seatKey(r,cc),m=by.get(k),v=(s.a||{})[k];

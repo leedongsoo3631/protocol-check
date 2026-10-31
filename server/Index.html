@@ -393,7 +393,7 @@ nav .dot.on{display:flex}
 <div class="mask" id="mLogS"><div class="sheet">
   <h3>체크 기록 (최근 100건)</h3>
   <div class="loglist" id="logList"></div>
-  <button class="btn mt" style="width:100%" id="logClose">닫기</button>
+  <div class="row mt"><button class="btn del" id="logClr">기록 모두 지우기</button><button class="btn" id="logClose">닫기</button></div>
 </div></div>
 
 <!-- 일괄 입력 -->
@@ -788,6 +788,12 @@ $('mLog').onclick=async()=>{close('mMenu');$('logList').innerHTML='<p class="hin
     $('logList').innerHTML=(r.log||[]).map(x=>`<div><b>${esc(x[0])}</b><span class="${x[3]==='도착'?'in':''}">${esc(x[2])} · ${esc(x[3])}</span><em>${esc(x[1])}</em></div>`).join('')||'<p class="hint">기록이 없습니다</p>'}
   catch(_){$('logList').innerHTML='<p class="hint">불러오지 못했습니다</p>'}};
 $('logClose').onclick=()=>close('mLogS');
+$('logClr').onclick=async()=>{
+  if(!(await ensurePin()))return;
+  if(!confirm('체크 기록을 모두 지울까요? 되돌릴 수 없습니다.'))return;
+  const ok=await write({a:'logclear'});
+  if(ok){$('logList').innerHTML='<p class="hint">기록이 없습니다</p>';toast('체크 기록을 모두 지웠습니다')}
+};
 
 /* ---------- 이미지 내보내기 ---------- */
 function segInit(id,cb){$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset.v);$('xOut').style.display='none'})}

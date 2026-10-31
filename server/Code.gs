@@ -42,7 +42,7 @@ function api(q) {
   if (q.a === 'loc') return loc_(q);
   if (q.a === 'pin') return String(q.pin) === String(EDIT_PIN) ? { ok: true } : { ok: false, error: 'pin' };
 
-  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey'];
+  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey', 'logclear'];
   if (editOps.indexOf(q.a) >= 0 && String(q.pin) !== String(EDIT_PIN)) return { ok: false, error: 'pin' };
 
   const lock = LockService.getScriptLock();
@@ -109,6 +109,10 @@ function api(q) {
     } else if (q.a === 'chatclear') {
       const cs = chatSheet_();
       if (cs.getLastRow() > 1) cs.deleteRows(2, cs.getLastRow() - 1);
+
+    } else if (q.a === 'logclear') {
+      const ls = logSheet_();
+      if (ls.getLastRow() > 1) ls.deleteRows(2, ls.getLastRow() - 1);
 
     } else if (q.a === 'vwkey') {
       PropertiesService.getScriptProperties().setProperty('vwKey', String(q.key || '').trim());

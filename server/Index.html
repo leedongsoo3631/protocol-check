@@ -54,7 +54,12 @@ header{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-fi
 .ev{flex-direction:row}
 .ev div{display:flex;flex-direction:column-reverse}
 
-.stat{display:flex;gap:4px;margin-top:12px;background:var(--fill);border-radius:10px;padding:3px}
+.statRow{display:flex;gap:8px;align-items:stretch;margin-top:12px}
+#bExport{flex:none;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 12px;font-family:inherit;box-shadow:0 3px 10px rgba(10,100,216,.25)}
+#bExport svg{width:19px;height:19px}
+#bExport em{font-style:normal;font-size:11px;font-weight:700}
+#bExport:active{transform:scale(.96)}
+.stat{flex:1;min-width:0;display:flex;gap:4px;background:var(--fill);border-radius:10px;padding:3px}
 .stat button{flex:1;border:0;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:500;background:transparent;color:var(--sub);display:flex;align-items:baseline;justify-content:center;gap:6px;transition:background .2s,color .2s}
 .stat button b{font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .stat button[data-f="in"] b{color:var(--ok)}
@@ -294,11 +299,11 @@ nav .dot.on{display:flex}
     <button class="ev" id="evBtn"><div><b id="evTitle">행사명을 입력하세요</b><span id="evSub"></span></div><i>수정</i></button>
     <button id="bCols" aria-label="열 수 바꾸기"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><em>3열</em></button>
   </div>
-  <div class="stat">
+  <div class="statRow"><div class="stat">
     <button data-f="all"><b id="cAll">0</b>전체</button>
     <button data-f="in"><b id="cIn">0</b>도착</button>
     <button data-f="out"><b id="cOut">0</b>미도착</button>
-  </div>
+  </div><button id="bExport" aria-label="현황 보내기"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></svg><em>보내기</em></button></div>
   <div class="bar"><i id="bar"></i></div>
   <button class="planBar empty" id="planBar"></button>
   <div class="sync" id="sync"><i></i><span id="syncTxt">로컬 모드</span></div>
@@ -310,8 +315,8 @@ nav .dot.on{display:flex}
   <button id="bMode"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></span><em>편집</em></button>
   <button id="bMap"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/></svg></span><em>지도</em></button>
   <button id="bMore"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg></span><em>메뉴</em></button>
+  <button id="bPlan"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3M8 17h6"/></svg></span><em>일정</em></button>
   <button id="bChat"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18.5V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 2.5z"/></svg></span><em>채팅</em><i class="dot" id="chatDot"></i></button>
-  <button id="bExport" class="pri"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></svg></span><em>현황 보내기</em></button>
 </nav>
 
 <!-- 인물 편집 -->
@@ -1027,6 +1032,7 @@ async function sendChat(text){
   if(!ok){$('chatTxt').value=text;toast('메시지를 보내지 못했습니다')}
 }
 $('bChat').onclick=openChat;
+$('bPlan').onclick=()=>openPlan();
 $('chatSend').onclick=()=>{const t=$('chatTxt').value;$('chatTxt').value='';$('chatTxt').style.height='';sendChat(t)};
 $('chatTxt').addEventListener('input',e=>{const t=e.target;t.style.height='auto';t.style.height=Math.min(t.scrollHeight,120)+'px'});
 $('chatTxt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('chatSend').click()}});

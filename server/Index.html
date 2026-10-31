@@ -533,7 +533,7 @@ ol.gd code{font-size:12px;background:var(--fill);border-radius:5px;padding:1px 5
   <h3>설정</h3>
   <div class="fld"><label>내 이름 (체크 기록에 남습니다)</label><input id="sName" placeholder="예: 이동수"></div>
   <div class="fld" id="sApiWrap"><label>공유 서버 주소 (Apps Script 웹 앱 URL)</label><input id="sApi" placeholder="https://script.google.com/macros/s/.../exec" inputmode="url">
-    <p class="hint">중구청 공유 서버가 기본으로 들어 있습니다. 받은 초대 문구를 통째로 붙여넣어도 주소만 골라 연결합니다.</p>
+    <p class="hint">중구청 공유 서버가 기본으로 들어 있습니다. 받은 초대 문구를 통째로 붙여넣어도 주소만 골라 연결합니다. 칸을 비우고 저장하면 이 휴대폰에서만 쓰는 모드가 됩니다.</p>
     <button class="btn" id="sGuide">내 공유 서버 만들기 안내</button></div>
   <span class="swl">알림</span>
   <div class="swg">
@@ -769,7 +769,9 @@ if(!P.api)P.api=DEFAULT_API;
 const savePrefs=()=>ls.set(PKEY,P);
 const BAKED=(()=>{const el=$('apiUrl');const u=el?(el.getAttribute('data-u')||''):'';return /^https?:/.test(u)?u:''})();
 const GAS=typeof google!=='undefined'&&google.script&&google.script.run;
-const server=()=>!!(GAS||BAKED||P.api);
+const LOCAL='none';   // 설정에서 서버 주소를 비우면 이 휴대폰에서만 쓰는 모드
+const API=()=>BAKED||(P.api&&P.api!==LOCAL?P.api:'');
+const server=()=>!!(GAS||API());
 
 /* ---------- 데이터 ---------- */
 function sample(){return [['의장','홍길동'],['부의장','김영희'],['운영위원장','이철수'],['구의원','박민수'],['구의원','최지은'],['구의원','정다은']].map(([pos,name])=>({id:uid(),pos,name,photo:'',checked:false,time:'',by:''}))}
@@ -799,7 +801,7 @@ let mode='check',editId=null,editPhoto='',editPhotoChanged=false,lastBlob=null,x
 /* ---------- 서버 통신 ---------- */
 function call(req){
   if(GAS)return new Promise((res,rej)=>google.script.run.withSuccessHandler(res).withFailureHandler(rej).api(req));
-  return fetch(BAKED||P.api,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(req)})
+  return fetch(API(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(req)})
     .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
 }
 let pending=0,pT=null,online=null,lastSync='',lastChange=Date.now();
@@ -1121,7 +1123,7 @@ $('fRestore').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(
 $('mSet').onclick=()=>{close('mMenu');
   $('sLoc').checked=P.loc===true;$('sLocRow').style.display=server()?'':'none';$('sVwWrap').style.display=server()?'':'none';$('sVw').value=S.vw||'';
   $('sVib').checked=P.vib!==false;$('sSnd').checked=P.snd!==false;$('sBg').checked=P.bg!==false&&(!AB||!AB.isWatching||AB.isWatching());$('sBgRow').style.display=(AB&&server())?'':'none';
-  $('sName').value=P.name;$('sApi').value=P.api;$('sApiWrap').style.display=(GAS||BAKED)?'none':'';
+  $('sName').value=P.name;$('sApi').value=P.api===LOCAL?'':P.api;$('sApiWrap').style.display=(GAS||BAKED)?'none':'';
   $('sInfo').textContent=(GAS||BAKED)?'공유 서버에 연결된 보드입니다. 이 페이지 주소(링크)를 함께 쓸 직원에게 카톡으로 보내면 됩니다.':'';
   open('mSetS')};
 $('sCancel').onclick=()=>close('mSetS');
@@ -1132,9 +1134,10 @@ $('sSave').onclick=()=>{
   if(server()){const wl=$('sLoc').checked;if(wl!==(P.loc===true)){P.loc=wl;if(wl)startLoc();else stopLoc(true)}
     const vk=$('sVw').value.trim();if(vk!==(S.vw||'')){ensurePin().then(ok=>{if(ok)write({a:'vwkey',key:vk}).then(()=>{if(map)setTiles()})})}}
   const api=pickApi($('sApi').value)||$('sApi').value.trim();
-  const changed=!(GAS||BAKED)&&api!==P.api;
+  const cur=P.api===LOCAL?'':P.api;
+  const changed=!(GAS||BAKED)&&api!==cur;
   if(changed&&api&&!/^https:\/\/script\.google(usercontent)?\.com\//.test(api)){toast('Apps Script 웹 앱 주소(https://script.google.com/...)를 입력하세요');return}
-  if(changed){P.api=api;P.pin='';online=null}
+  if(changed){P.api=api||LOCAL;P.pin='';online=null}
   savePrefs();close('mSetS');watch(true);
   if(changed){mode='check';initData();render();poll();
 if(!server()&&!S.title)setTimeout(openInfo,400);toast(api?'공유 서버에 연결합니다':'로컬 모드로 전환했습니다')}
@@ -1271,7 +1274,7 @@ function notifyEv(ev){
 }
 function watch(force){
   if(!AB||!AB.startWatch)return;
-  try{const url=BAKED||P.api;
+  try{const url=API();
     if(server()&&url&&P.bg!==false)AB.startWatch(url,P.name||'',P.vib!==false,P.snd!==false,!!force);else AB.stopWatch()}catch(_){}
 }
 
@@ -1890,7 +1893,7 @@ async function serverCode(){
   for(const u of ['Code.gs',RAW_CODE]){try{const r=await fetch(u,{cache:'no-store'});if(r.ok){const t=await r.text();if(t.includes('function api('))return t}}catch(_){}}
   return '';
 }
-function openGuide(){$('gdUrl').value=(!GAS&&!BAKED&&P.api!==DEFAULT_API)?P.api:'';$('gdMsg').textContent='';open('mGuide')}
+function openGuide(){$('gdUrl').value=(!GAS&&!BAKED&&P.api!==DEFAULT_API&&P.api!==LOCAL)?P.api:'';$('gdMsg').textContent='';open('mGuide')}
 $('mGuideB').onclick=()=>{close('mMenu');openGuide()};
 $('sGuide').onclick=()=>{close('mSetS');openGuide()};
 $('gdClose').onclick=()=>close('mGuide');
@@ -1909,7 +1912,7 @@ $('gdTest').onclick=async()=>{
   if(!j){$('gdMsg').textContent='연결되지 않습니다. 배포 때 액세스 권한을 "모든 사용자"로 했는지, 주소 끝이 /exec 인지 확인하세요.';return}
   $('gdMsg').textContent=`연결 성공 · 명단 ${(j.members||[]).length}명`;useApi(u);setTimeout(()=>{close('mGuide');toast('새 공유 서버에 연결했습니다')},700)};
 function inviteText(){
-  const u=BAKED||P.api;
+  const u=API();
   return `[의전 체크] ${S.title?`'${S.title}' `:''}담당자 초대\n\n① 앱 설치(안드로이드)\n${APP_PAGE}\n\n② 앱 ☰메뉴 → 설정 → '공유 서버 주소' 칸에 이 문구 전체를 붙여넣고 저장\n\n서버 주소: ${u}\n\n※ 명단 편집 비밀번호는 담당자에게 따로 받으세요.`;
 }
 $('mInviteB').onclick=()=>{close('mMenu');if(!server()){toast('공유 서버에 연결된 뒤 초대할 수 있습니다');return}copyTxt(inviteText(),'초대 문구를 복사했습니다 — 카톡에 붙여넣으세요')};

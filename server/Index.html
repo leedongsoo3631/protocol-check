@@ -210,6 +210,12 @@ nav .dot.on{display:flex}
 .cm .tm{font-size:10.5px;color:var(--faint);margin:2px 8px 0;font-variant-numeric:tabular-nums}
 .cm.wait .bub{opacity:.6}
 .chatEmpty{margin:auto;text-align:center;color:var(--sub);font-size:14px;line-height:1.7}
+
+#chatOn{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 10px;font-size:12.5px;color:var(--sub)}
+#chatOn b{font-weight:600;color:var(--ok);display:flex;align-items:center;gap:5px}
+#chatOn b::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--okbg)}
+#chatOn span{background:var(--fill);color:var(--ink);border-radius:8px;padding:3px 8px;font-weight:600}
+#chatOn span.me{background:var(--okbg);color:var(--ok)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:6px 0 8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chips button{flex:none;border:0;background:var(--surface);color:var(--accent);font-size:13.5px;font-weight:600;padding:8px 12px;border-radius:999px;box-shadow:inset 0 0 0 .5px var(--line);font-family:inherit}
@@ -520,6 +526,7 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
 <!-- 채팅 -->
 <div class="mask" id="mChat"><div class="sheet">
   <h3>채팅 <small id="chatSub"></small></h3>
+  <div id="chatOn"></div>
   <div id="chatList"></div>
   <div class="chips" id="chips"></div>
   <div class="chatIn"><textarea id="chatTxt" rows="1" placeholder="메시지 입력" maxlength="300"></textarea><button id="chatSend" aria-label="보내기"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button></div>
@@ -688,7 +695,7 @@ async function poll(){
   clearTimeout(pT);
   if(!server())return;
   if(!document.hidden){
-    try{const r=await call({a:'state',ver});if(!pending)applyState(r);setOnline(true)}
+    try{const r=await call({a:'state',ver,dev:P.dev,by:P.name});if(r&&r.on){S.on=r.on;renderOn()}if(!pending)applyState(r);setOnline(true)}
     catch(_){setOnline(false)}
   }
   pT=setTimeout(poll,online===false?6000:3500);
@@ -1127,9 +1134,17 @@ function renderChat(){
   const last=(S.chat||[]).reduce((a,c)=>Math.max(a,c.s||0),0);
   if(last>(P.chatRead||0)){P.chatRead=last;savePrefs()}
 }
+function renderOn(){
+  const el=$('chatOn');if(!el)return;const on=S.on||[];
+  const seen=new Set(),names=[];
+  on.forEach(o=>{const n=o.n||'이름 없음',me=o.d===P.dev;const k=me?'@me':n;if(seen.has(k))return;seen.add(k);names.push({n,me})});
+  if(!names.some(x=>x.me)&&server())names.unshift({n:P.name||'이름 없음',me:true});
+  names.sort((a,b)=>b.me-a.me);
+  el.innerHTML=`<b>접속 중 ${names.length}명</b>`+names.map(x=>`<span class="${x.me?'me':''}">${esc(x.n)}${x.me?' (나)':''}</span>`).join('');
+}
 function openChat(){
   if(!server())return;
-  $('chatList').dataset.first='0';open('mChat');renderChat();
+  $('chatList').dataset.first='0';open('mChat');renderOn();renderChat();
   setTimeout(()=>{$('chatList').scrollTop=$('chatList').scrollHeight},50);
 }
 async function sendChat(text){

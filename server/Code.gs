@@ -38,7 +38,7 @@ function doPost(e) {
 /* 공통 처리 */
 function api(q) {
   q = q || {};
-  if (q.a === 'state') return state_(q.ver);
+  if (q.a === 'state') { const on = pres_(q.dev, q.by); const s = state_(q.ver); s.on = on; return s; }
   if (q.a === 'photos') return photos_(q.ids || []);
   if (q.a === 'log') return { ok: true, log: log_() };
   if (q.a === 'planimg') return { ok: true, img: planSheet_().getRange(3, 2, 1, 10).getDisplayValues()[0].join('') };
@@ -290,7 +290,18 @@ function loc_(q) {
   lock.waitLock(10000);
   try {
     const sh = locSheet_();
-    const n = sh.getLastRow() - 1;
+    const name = String(q.by || '').slice(0, 30);
+    const lim = Date.now() - 12 * 3600 * 1000;
+    let n = sh.getLastRow() - 1;
+    const rows = n > 0 ? sh.getRange(2, 1, n, 6).getDisplayValues() : [];
+    // 오래된 위치, 같은 이름의 다른 기기(앱 재설치·이전 버전) 흔적은 지운다
+    for (let k = rows.length - 1; k >= 0; k--) {
+      const r = rows[k];
+      const stale = (Number(r[5]) || 0) < lim;
+      const sameName = r[0] !== dev && name && name !== '이름 없음' && r[1] === name;
+      if (stale || sameName) sh.deleteRow(k + 2);
+    }
+    n = sh.getLastRow() - 1;
     const ids = n > 0 ? sh.getRange(2, 1, n, 1).getDisplayValues().map(x => x[0]) : [];
     const i = ids.indexOf(dev);
     if (q.off) {
@@ -299,7 +310,7 @@ function loc_(q) {
     }
     const lat = Number(q.lat), lng = Number(q.lng);
     if (!isFinite(lat) || !isFinite(lng)) return { ok: false, error: '좌표 없음' };
-    const row = [dev, String(q.by || '').slice(0, 30), lat.toFixed(6), lng.toFixed(6),
+    const row = [dev, name, lat.toFixed(6), lng.toFixed(6),
       String(Math.round(Number(q.acc) || 0)), String(Date.now()),
       Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss')];
     if (i >= 0) sh.getRange(i + 2, 1, 1, 7).setValues([row]);
@@ -356,4 +367,23 @@ function seat_() {
   const v = seatSheet_().getRange('B1').getDisplayValue();
   if (!v) return null;
   try { return JSON.parse(v); } catch (e) { return null; }
+}
+
+/* ---------- 접속 중 (앱을 열어 둔 사람, 캐시에 60초 보관) ---------- */
+function pres_(dev, by) {
+  const c = CacheService.getScriptCache();
+  let m = {};
+  try { m = JSON.parse(c.get('pres') || '{}'); } catch (e) {}
+  const now = Date.now();
+  dev = String(dev || '').slice(0, 40);
+  const name = String(by || '').slice(0, 30);
+  if (dev) {
+    const o = m[dev];
+    if (!o || now - o.t > 15000 || o.n !== name) {
+      m[dev] = { n: name, t: now };
+      Object.keys(m).forEach(k => { if (now - m[k].t > 90000) delete m[k]; });
+      c.put('pres', JSON.stringify(m), 600);
+    }
+  }
+  return Object.keys(m).filter(k => now - m[k].t < 60000).map(k => ({ d: k, n: m[k].n }));
 }

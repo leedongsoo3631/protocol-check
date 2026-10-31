@@ -7,6 +7,7 @@ const SHEET = '명단';
 const LOGSHEET = '체크기록';
 const CHATSHEET = '채팅';
 const LOCSHEET = '위치';
+const PLANSHEET = '일정';
 const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo', 'note'];
 const NOTECOL = 10;
 
@@ -39,11 +40,12 @@ function api(q) {
   if (q.a === 'state') return state_(q.ver);
   if (q.a === 'photos') return photos_(q.ids || []);
   if (q.a === 'log') return { ok: true, log: log_() };
+  if (q.a === 'planimg') return { ok: true, img: planSheet_().getRange(3, 2, 1, 10).getDisplayValues()[0].join('') };
   if (q.a === 'locs') return { ok: true, now: Date.now(), locs: locs_() };
   if (q.a === 'loc') return loc_(q);
   if (q.a === 'pin') return String(q.pin) === String(EDIT_PIN) ? { ok: true } : { ok: false, error: 'pin' };
 
-  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey', 'logclear'];
+  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey', 'logclear', 'plan'];
   if (editOps.indexOf(q.a) >= 0 && String(q.pin) !== String(EDIT_PIN)) return { ok: false, error: 'pin' };
 
   const lock = LockService.getScriptLock();
@@ -116,6 +118,18 @@ function api(q) {
       const ls = logSheet_();
       if (ls.getLastRow() > 1) ls.deleteRows(2, ls.getLastRow() - 1);
 
+    } else if (q.a === 'plan') {
+      const ps = planSheet_();
+      const sched = (q.sched || []).slice(0, 80).map(s => ({ t: String(s.t || '').slice(0, 5), x: String(s.x || '').slice(0, 120), n: String(s.n || '').slice(0, 80) }));
+      ps.getRange('B1').setValue(String(q.memo || '').slice(0, 5000));
+      ps.getRange('B2').setValue(JSON.stringify(sched));
+      if (q.img !== undefined) {
+        const img = String(q.img || '').slice(0, 490000), parts = [];
+        for (let k = 0; k < 10; k++) parts.push(img.slice(k * 49000, (k + 1) * 49000));
+        ps.getRange(3, 2, 1, 10).setValues([parts]);
+        ps.getRange('B4').setValue(String((Number(ps.getRange('B4').getDisplayValue()) || 0) + 1));
+      }
+
     } else if (q.a === 'vwkey') {
       PropertiesService.getScriptProperties().setProperty('vwKey', String(q.key || '').trim());
 
@@ -150,7 +164,7 @@ function ss_() {
 /* 처음 한 번 실행: 권한 승인 + 저장용 시트 만들기 (편집기에서 ▶실행) */
 function setup() {
   const s = ss_();
-  sheet_(); logSheet_(); chatSheet_(); locSheet_();
+  sheet_(); logSheet_(); chatSheet_(); locSheet_(); planSheet_();
   Logger.log('준비 완료. 저장용 시트: ' + s.getUrl());
 }
 
@@ -187,7 +201,7 @@ function state_(ver) {
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
     id: o.id, pos: o.pos, name: o.name, note: o.note, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
-  return { ok: true, ver: cur, chat: chat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
+  return { ok: true, ver: cur, chat: chat_(), plan: plan_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
 }
 
 function photos_(ids) {
@@ -299,4 +313,23 @@ function locs_() {
   return sh.getRange(2, 1, n, 6).getDisplayValues()
     .map(x => ({ dev: x[0], by: x[1], lat: Number(x[2]), lng: Number(x[3]), acc: Number(x[4]) || 0, t: Number(x[5]) || 0 }))
     .filter(o => o.t > lim && isFinite(o.lat) && isFinite(o.lng));
+}
+
+/* ---------- 메모·스케줄 (일정 시트 B1 메모, B2 스케줄 JSON, B3 식순 사진, B4 사진 번호) ---------- */
+function planSheet_() {
+  const ss = ss_();
+  let sh = ss.getSheetByName(PLANSHEET);
+  if (!sh) {
+    sh = ss.insertSheet(PLANSHEET);
+    sh.getRange('A:B').setNumberFormat('@');
+    sh.getRange(1, 1, 4, 2).setValues([['주요 메모', ''], ['스케줄(JSON)', '[]'], ['식순 사진', ''], ['사진 번호', '0']]);
+  }
+  return sh;
+}
+
+function plan_() {
+  const v = planSheet_().getRange(1, 2, 4, 1).getDisplayValues();
+  let sched = [];
+  try { sched = JSON.parse(v[1][0] || '[]'); } catch (e) {}
+  return { memo: v[0][0] || '', sched: sched, imgv: Number(v[3][0]) || 0, hasImg: !!v[2][0] };
 }

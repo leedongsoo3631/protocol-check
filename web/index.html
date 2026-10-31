@@ -251,6 +251,39 @@ nav .dot.on{display:flex}
 .pin i{order:2;width:30px;height:30px;border-radius:50%;background:#14a05c;color:#fff;font:700 13px/30px var(--font);font-style:normal;text-align:center;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .pin.idle i{background:#f59e0b}.pin.old i{background:#8e8e93}.pin.me i{background:#0a64d8}
 .leaflet-container{font-family:var(--font)}
+/* 일정 바 */
+.planBar{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;border:0;background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:9px 12px;font-family:inherit;text-align:left}
+.planBar em{font-style:normal;font-size:11.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:2px 7px;flex:none}
+.planBar span{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planBar i{font-style:normal;color:var(--accent);font-size:18px;line-height:1}
+.planBar.empty{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--accent);border-style:dashed}
+.planBar.empty b{font-size:16px}
+.planBar.empty span{font-weight:600;font-size:13.5px}
+/* 일정 보기 */
+.plSec{background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:inset 0 0 0 .5px var(--line)}
+.plSec h4{margin:0 0 8px;font-size:13px;color:var(--sub);font-weight:600}
+#plMemoT{font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.pr{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:.5px solid var(--line)}
+.pr:first-child{border-top:0;padding-top:2px}
+.pr b{flex:none;width:48px;font-variant-numeric:tabular-nums;font-size:15px;font-weight:700;color:var(--ink)}
+.pr span{flex:1;min-width:0;font-size:15px;line-height:1.45}
+.pr span small{display:block;font-size:12.5px;color:var(--sub)}
+.pr em{flex:none;font-style:normal;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;background:var(--accent-soft);color:var(--accent)}
+.pr.cur em{background:var(--ok);color:#fff}
+.pr.cur b,.pr.cur span{color:var(--ok)}
+.pr.done b,.pr.done span{color:var(--faint)}
+#plImg{width:100%;border-radius:10px;display:block;cursor:zoom-in}
+#mImg{align-items:center;background:rgba(0,0,0,.92);z-index:50}
+#imgFull{max-width:100%;max-height:100%;object-fit:contain}
+/* 일정 수정 */
+#peMemo{min-height:110px}
+.per{display:grid;grid-template-columns:74px minmax(0,1fr) 36px;gap:6px;align-items:center;margin-bottom:8px}
+.per input{border:0;background:var(--surface);color:var(--ink);border-radius:10px;padding:10px;font-size:15px;font-family:inherit;min-width:0;box-shadow:inset 0 0 0 .5px var(--line)}
+.per input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.per .pn{grid-column:2/3;font-size:13.5px;padding:8px 10px}
+.per button{grid-row:1/3;grid-column:3;width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--warn);font-size:20px;font-family:inherit}
+.per .pt{grid-row:1/3;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+#peImg{width:100%;border-radius:10px;display:block;margin-bottom:8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -267,6 +300,7 @@ nav .dot.on{display:flex}
     <button data-f="out"><b id="cOut">0</b>미도착</button>
   </div>
   <div class="bar"><i id="bar"></i></div>
+  <button class="planBar empty" id="planBar"></button>
   <div class="sync" id="sync"><i></i><span id="syncTxt">로컬 모드</span></div>
 </header>
 <div class="editnote">편집 모드 — 카드를 눌러 수정하세요</div>
@@ -390,6 +424,30 @@ nav .dot.on{display:flex}
   <div class="row"><button class="btn" id="locNo">공유 안 함</button><button class="btn pri" id="locYes">동의하고 공유</button></div>
 </div></div>
 
+<!-- 일정·메모 보기 -->
+<div class="mask" id="mPlan"><div class="sheet">
+  <h3>행사 일정·메모</h3>
+  <div class="plSec" id="plMemo"><h4>주요 메모</h4><div id="plMemoT"></div></div>
+  <div class="plSec" id="plSched"><h4>스케줄</h4><div id="plList"></div></div>
+  <div class="plSec" id="plImgW"><h4>식순·배치도 사진 (누르면 크게)</h4><img id="plImg" alt="식순 사진"></div>
+  <p class="hint" id="plEmpty">아직 등록된 일정·메모가 없습니다.</p>
+  <div class="row mt"><button class="btn" id="plClose">닫기</button><button class="btn pri" id="plEdit">수정</button></div>
+</div></div>
+<div class="mask" id="mImg"><img id="imgFull" alt="식순 사진 크게 보기"></div>
+
+<!-- 일정·메모 수정 -->
+<div class="mask" id="mPlanE"><div class="sheet">
+  <h3>일정·메모 수정</h3>
+  <div class="fld"><label for="peMemo">주요 메모</label><textarea id="peMemo" placeholder="예: 우천 시 실내 진행&#10;내빈 주차: 지하 2층, 의전 차량은 정문 앞&#10;의장 축사 3분"></textarea></div>
+  <div class="fld"><label>스케줄 (시각 순으로 자동 정렬)</label><div id="peList"></div>
+    <div class="row"><button type="button" class="btn" id="peAdd">＋ 한 줄 추가</button><button type="button" class="btn" id="peTogglePaste">붙여넣기로 입력</button></div>
+    <div id="pePasteW" hidden class="mt"><textarea id="pePaste" style="width:100%;min-height:120px;border:0;border-radius:12px;padding:12px;font-size:15px;font-family:inherit;background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 .5px var(--line)" placeholder="엑셀에서 (시각, 내용, 장소) 칸을 복사해 붙여넣거나&#10;17:30 내빈 도착&#10;18:00 개회식&#10;처럼 한 줄씩 적으세요"></textarea><button type="button" class="btn pri mt" style="width:100%" id="pePasteGo">스케줄에 넣기</button></div>
+  </div>
+  <div class="fld"><label>식순·배치도 사진 (선택)</label><div id="peImgW" hidden><img id="peImg" alt="식순 사진"></div>
+    <div class="row"><div class="pick btn">사진 선택<input type="file" id="fPlanImg" accept="image/*"></div><button type="button" class="btn del" id="peNoImg" hidden>사진 삭제</button></div></div>
+  <div class="row mt"><button class="btn" id="peCancel">취소</button><button class="btn pri" id="peSave">저장</button></div>
+</div></div>
+
 <!-- 채팅 -->
 <div class="mask" id="mChat"><div class="sheet">
   <h3>채팅 <small id="chatSub"></small></h3>
@@ -470,7 +528,7 @@ function initData(){
   synced=false;
   if(server()){
     S=ls.get(CKEY)||{title:'',date:'',time:'',place:'',members:[]};
-    S.chat=S.chat||[];
+    S.chat=S.chat||[];S.plan=S.plan||null;
     S.members.forEach(m=>m.photo=phGet(m.id,m.prev));
   }else{
     const d=ls.get(LKEY);
@@ -479,7 +537,7 @@ function initData(){
   }
 }
 function saveLocal(){
-  if(server()){ls.set(CKEY,{vw:S.vw||'',title:S.title,date:S.date,time:S.time,place:S.place,chat:S.chat||[],members:S.members.map(m=>{const o=Object.assign({},m);delete o.photo;return o})});return}
+  if(server()){ls.set(CKEY,{vw:S.vw||'',title:S.title,date:S.date,time:S.time,place:S.place,chat:S.chat||[],plan:S.plan||null,members:S.members.map(m=>{const o=Object.assign({},m);delete o.photo;return o})});return}
   if(!ls.set(LKEY,S))toast('저장 공간이 부족합니다. 사진 수를 줄여주세요.');
 }
 let mode='check',editId=null,editPhoto='',editPhotoChanged=false,lastBlob=null,xWho='all',xCols=4;
@@ -506,8 +564,10 @@ function applyState(r){
     r.members.forEach(m=>{const o=prev.get(m.id);if(o&&o.checked!==m.checked)
       ev.push({k:'chk',t:m.checked?'도착':'도착 체크 해제',m:`${m.pos?m.pos+' ':''}${m.name}`+(m.checked?` · ${m.time}${m.by?' · '+m.by+' 체크':''}`:'')})});
     (r.chat||[]).forEach(c=>{if(c.s>lastSeq&&c.by!==P.name)ev.push({k:'chat',t:c.by||'채팅',m:c.x})});
+    if(S.plan&&r.plan&&JSON.stringify(S.plan)!==JSON.stringify(r.plan)&&!$('mPlanE').classList.contains('show'))ev.push({k:'plan',t:'일정·메모 변경',m:'행사 일정이나 메모가 수정되었습니다'});
   }
   synced=true;
+  S.plan=r.plan||{memo:'',sched:[],imgv:0,hasImg:false};
   S.chat=r.chat||[];
   ver=r.ver;S.vw=r.meta.vw||'';S.title=r.meta.title||'';S.date=r.meta.date||'';S.time=r.meta.time||'';S.place=r.meta.place||'';
   S.members=r.members.map(m=>Object.assign(m,{photo:phGet(m.id,m.prev)}));
@@ -607,6 +667,7 @@ function evLine(){return [fmtDate(S.date),S.time,S.place].filter(Boolean).join('
 /* ---------- 렌더 ---------- */
 function filtered(f){return S.members.filter(m=>f==='in'?m.checked:f==='out'?!m.checked:true)}
 function render(){
+  renderPlanBar();
   $('evTitle').textContent=S.title||'행사명을 입력하세요';$('evTitle').classList.toggle('ph',!S.title);
   $('evSub').textContent=evLine()||'날짜·시각·장소를 입력하세요';
   document.title=S.title?S.title+' · 의전 체크':'의전 체크 보드';
@@ -911,12 +972,12 @@ function beep(kind){
 }
 function notifyEv(ev){
   const chat=ev.filter(e=>e.k==='chat'),chk=ev.filter(e=>e.k==='chk');
-  const top=chat.length?chat[chat.length-1]:chk[chk.length-1];
+  const top=chat.length?chat[chat.length-1]:chk.length?chk[chk.length-1]:ev[ev.length-1];
   const quiet=$('mChat').classList.contains('show')&&!chk.length;
   const more=ev.length>1?` 외 ${ev.length-1}건`:'';
   $('alertIc').className='ic'+(top.k==='chat'?' chat':'');$('alertIc').innerHTML=top.k==='chat'?AL_CHAT:AL_CHK;
   $('alertT').textContent=(top.k==='chat'?'💬 ':'')+top.t+more;$('alertM').textContent=top.m;
-  $('alertBar').onclick=()=>{$('alertBar').classList.remove('show');if(top.k==='chat')openChat()};
+  $('alertBar').onclick=()=>{$('alertBar').classList.remove('show');if(top.k==='chat')openChat();else if(top.k==='plan')openPlan()};
   if(!quiet){$('alertBar').classList.remove('show');void $('alertBar').offsetWidth;$('alertBar').classList.add('show');
   clearTimeout(aT);aT=setTimeout(()=>$('alertBar').classList.remove('show'),5000)}
   const kind=chat.length?'chat':'chk';
@@ -1092,6 +1153,118 @@ $('mapSat').onclick=()=>{sat=!sat;$('mapSat').textContent=sat?'일반':'위성';
 $('mapList').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.d==='_share'){open('mLoc');return}
   const m=marks[b.dataset.d];if(m)map.setView(m.getLatLng(),18)};
+
+/* ---------- 메모·스케줄 ---------- */
+function planOf(){return S.plan||{memo:'',sched:[],imgv:0,hasImg:false}}
+function nowMin(){const d=new Date();return d.getHours()*60+d.getMinutes()}
+function tMin(t){const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?(+m[1])*60+(+m[2]):null}
+function isToday(){return !S.date||S.date===today()}
+function schedState(){
+  const sc=(planOf().sched||[]).filter(s=>s.t||s.x);
+  if(!isToday())return {sc,cur:-1,next:sc.length?0:-1};
+  const n=nowMin();let cur=-1,next=-1;
+  sc.forEach((s,i)=>{const m=tMin(s.t);if(m===null)return;if(m<=n)cur=i;else if(next<0)next=i});
+  return {sc,cur,next};
+}
+function renderPlanBar(){
+  const p=planOf(),b=$('planBar');const {sc,cur,next}=schedState();
+  if(!sc.length&&!p.memo&&!p.hasImg){b.innerHTML='<b>＋</b><span>행사 스케줄·주요 메모 넣기</span>';b.className='planBar empty';return}
+  let txt='';
+  if(next>=0)txt=`<em>다음</em><span>${esc(sc[next].t)} ${esc(sc[next].x)}</span>`;
+  else if(cur>=0&&nowMin()-tMin(sc[cur].t)>90)txt=`<em>종료</em><span>모든 일정이 끝났습니다</span>`;
+  else if(cur>=0)txt=`<em>진행 중</em><span>${esc(sc[cur].t)} ${esc(sc[cur].x)}</span>`;
+  else txt=`<em>메모</em><span>${esc((p.memo||'').split('\n')[0]||'식순 사진')}</span>`;
+  b.className='planBar';b.innerHTML=txt+'<i>›</i>';
+}
+setInterval(()=>{renderPlanBar();if($('mPlan').classList.contains('show'))renderPlan()},30000);
+let planImg={v:-1,d:''};
+async function loadPlanImg(){
+  const p=planOf();
+  if(!p.hasImg){planImg={v:p.imgv,d:''};return ''}
+  if(planImg.v===p.imgv&&planImg.d)return planImg.d;
+  if(!server())return planImg.d;
+  const c=ls.get('pcb.planimg');if(c&&c.v===p.imgv){planImg=c;return c.d}
+  try{const r=await call({a:'planimg'});if(r&&r.ok){planImg={v:p.imgv,d:r.img||''};ls.set('pcb.planimg',planImg);return planImg.d}}catch(_){}
+  return '';
+}
+function renderPlan(){
+  const p=planOf();const {sc,cur,next}=schedState();
+  $('plMemo').hidden=!p.memo;$('plMemoT').textContent=p.memo||'';
+  $('plSched').hidden=!sc.length;
+  $('plList').innerHTML=sc.map((s,i)=>`<div class="pr${i===cur?' cur':''}${i===next?' nxt':''}${cur>=0&&i<cur?' done':''}"><b>${esc(s.t)||'—'}</b><span>${esc(s.x)}${s.n?`<small>${esc(s.n)}</small>`:''}</span>${i===cur?'<em>진행 중</em>':i===next?'<em>다음</em>':''}</div>`).join('');
+  $('plEmpty').hidden=!!(p.memo||sc.length||p.hasImg);
+  $('plImgW').hidden=!p.hasImg;
+  if(p.hasImg)loadPlanImg().then(d=>{if(d)$('plImg').src=d});
+}
+function openPlan(){
+  const p=planOf();
+  if(!p.memo&&!(p.sched||[]).length&&!p.hasImg){openPlanEdit();return}
+  renderPlan();open('mPlan');
+}
+$('planBar').onclick=openPlan;
+$('plImg').onclick=()=>{$('imgFull').src=$('plImg').src;open('mImg')};
+$('mImg').onclick=()=>close('mImg');
+$('plClose').onclick=()=>close('mPlan');
+$('plEdit').onclick=()=>{close('mPlan');openPlanEdit()};
+
+/* 수정 화면 */
+let peImg=undefined;
+function normT(v){v=String(v||'').trim().replace(/[시.]\s*/,':').replace('분','').replace(/\s/g,'');
+  let m=/^(\d{1,2}):?(\d{2})?$/.exec(v);if(!m&&/^\d{3,4}$/.test(v))m=[0,v.slice(0,-2),v.slice(-2)];
+  if(!m)return v;const hh=+m[1],mm=+(m[2]||0);return hh<24&&mm<60?String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'):v}
+function peRow(s){
+  const d=document.createElement('div');d.className='per';
+  d.innerHTML='<input class="pt" inputmode="numeric" placeholder="18:00" maxlength="5"><input class="px" placeholder="내용 (예: 개회식)" maxlength="120"><input class="pn" placeholder="장소·담당 (선택)" maxlength="80"><button type="button" aria-label="삭제">−</button>';
+  d.querySelector('.pt').value=s&&s.t||'';d.querySelector('.px').value=s&&s.x||'';d.querySelector('.pn').value=s&&s.n||'';
+  const pt=d.querySelector('.pt');pt.addEventListener('blur',()=>{pt.value=normT(pt.value)});
+  d.querySelector('button').onclick=()=>d.remove();$('peList').appendChild(d);return d;
+}
+async function openPlanEdit(){
+  if(!(await ensurePin()))return;
+  const p=planOf();
+  $('peMemo').value=p.memo||'';$('peList').innerHTML='';(p.sched||[]).forEach(peRow);if(!(p.sched||[]).length)peRow();
+  peImg=undefined;$('pePaste').value='';$('pePasteW').hidden=true;
+  const d=p.hasImg?await loadPlanImg():'';$('peImg').src=d||'';$('peImgW').hidden=!d;$('peNoImg').hidden=!d;
+  open('mPlanE');
+}
+$('peAdd').onclick=()=>{const d=peRow();d.querySelector('.pt').focus()};
+$('peTogglePaste').onclick=()=>{$('pePasteW').hidden=!$('pePasteW').hidden};
+$('pePasteGo').onclick=()=>{
+  const rows=$('pePaste').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    let p=l.includes('\t')?l.split('\t'):l.includes(',')?l.split(','):null;
+    if(!p){const m=/^(\d{1,2}[:시.]\s?\d{0,2}분?)\s*(.*)$/.exec(l);p=m?[m[1],m[2]]:['',l]}
+    let t=(p[0]||'').trim().replace(/시\s*/,':').replace('분','').replace('.',':');
+    const tm=/^(\d{1,2}):?(\d{0,2})$/.exec(t);t=tm?String(tm[1]).padStart(2,'0')+':'+String(tm[2]||'00').padStart(2,'0'):'';
+    return {t,x:(p[1]||'').trim()||(!tm?(p[0]||'').trim():''),n:(p.slice(2).join(' ')||'').trim()};
+  }).filter(s=>s.t||s.x);
+  if(!rows.length){toast('붙여넣은 내용이 없습니다');return}
+  [...$('peList').children].forEach(r=>{if(!r.querySelector('.pt').value&&!r.querySelector('.px').value)r.remove()});
+  rows.forEach(peRow);$('pePaste').value='';$('pePasteW').hidden=true;toast(rows.length+'줄을 넣었습니다');
+};
+$('fPlanImg').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const d=await fileToImage(f,1400,420000);peImg=d;$('peImg').src=d;$('peImgW').hidden=false;$('peNoImg').hidden=false}catch(_){toast('사진을 읽을 수 없습니다')}};
+$('peNoImg').onclick=()=>{peImg='';$('peImg').src='';$('peImgW').hidden=true;$('peNoImg').hidden=true};
+$('peCancel').onclick=()=>close('mPlanE');
+$('peSave').onclick=async()=>{
+  const sched=[...$('peList').children].map(r=>({t:normT(r.querySelector('.pt').value),x:r.querySelector('.px').value.trim(),n:r.querySelector('.pn').value.trim()}))
+    .filter(s=>s.t||s.x).sort((a,b)=>(tMin(a.t)??9999)-(tMin(b.t)??9999));
+  const memo=$('peMemo').value.trim();
+  const p=planOf();
+  S.plan={memo,sched,imgv:p.imgv+(peImg!==undefined?1:0),hasImg:peImg!==undefined?!!peImg:p.hasImg};
+  if(peImg!==undefined){planImg={v:S.plan.imgv,d:peImg};ls.set('pcb.planimg',planImg)}
+  saveLocal();renderPlanBar();close('mPlanE');
+  if(server()){const req={a:'plan',memo,sched};if(peImg!==undefined)req.img=peImg;const ok=await write(req);if(ok)toast('일정·메모를 저장했습니다')}
+  else toast('일정·메모를 저장했습니다');
+};
+function fileToImage(file,maxW,maxLen){return new Promise((res,rej)=>{
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{URL.revokeObjectURL(url);let out='';
+    for(const [w,q] of [[maxW,.8],[maxW,.68],[maxW*.85,.6],[maxW*.7,.55],[maxW*.6,.5],[maxW*.5,.45]]){
+      const W=Math.min(w,img.width),H=Math.round(img.height*W/img.width),c=document.createElement('canvas');c.width=W;c.height=H;
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(img,0,0,W,H);
+      out=c.toDataURL('image/jpeg',q);if(out.length<maxLen)break}
+    res(out)};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
 
 window.__pcbBack=()=>{const ms=document.querySelectorAll('.mask.show'),m=ms[ms.length-1];if(m){m.classList.remove('show');if(m.id==='mMap')closeMap();renderChat();return true}
   if(mode==='edit'){mode='check';render();return true}return false};

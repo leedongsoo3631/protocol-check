@@ -151,6 +151,7 @@ public class WatchService extends Service {
         boolean first = true;
         Map<String, Boolean> checked = new HashMap<>();
         long lastSeq = 0;
+        String lastPlan = null;
         int fails = 0;
         while (running) {
             try {
@@ -204,6 +205,12 @@ public class WatchService extends Service {
                             }
                         }
                     }
+                    JSONObject pl = r.optJSONObject("plan");
+                    String ps = pl == null ? "" : pl.toString();
+                    if (!first && lastPlan != null && !ps.equals(lastPlan)) {
+                        ev.add(new String[]{"📋 일정·메모 변경", "행사 일정이나 메모가 수정되었습니다", "plan"});
+                    }
+                    lastPlan = ps;
                     checked = now;
                     lastSeq = maxSeq;
                     first = false;

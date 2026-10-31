@@ -48,9 +48,11 @@ header{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-fi
 .ev{flex:1;min-width:0;display:flex;align-items:flex-end;gap:10px;background:none;border:0;padding:2px 0 0;text-align:left}
 .ev div{flex:1;min-width:0}
 .ev span{display:block;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.ev b{display:block;font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.25;max-height:2.5em;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere}
+.ev b.long{font-size:18px}
+.ev b.xlong{font-size:16px}
 .ev b.ph{color:var(--faint)}
-.ev i{font-style:normal;font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:5px 12px;flex:none;margin-bottom:3px}
+.ev i{align-self:flex-end;font-style:normal;font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:5px 12px;flex:none;margin-bottom:3px}
 .ev{flex-direction:row}
 .ev div{display:flex;flex-direction:column-reverse}
 
@@ -70,6 +72,7 @@ header{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-fi
 .sync i{width:7px;height:7px;border-radius:50%;background:var(--faint);display:inline-block}
 .sync.on i{background:var(--ok);box-shadow:0 0 0 3px var(--okbg)}
 .sync.off i{background:var(--warn)}
+.sync.wait i{background:#ff9500;box-shadow:0 0 0 3px rgba(255,149,0,.18)}
 .editnote{display:none;background:var(--accent-soft);color:var(--accent);font-size:13px;font-weight:600;padding:9px 16px;text-align:center}
 body.edit .editnote{display:block}
 
@@ -635,8 +638,9 @@ const server=()=>!!(GAS||BAKED||P.api);
 
 /* ---------- 데이터 ---------- */
 function sample(){return [['의장','홍길동'],['부의장','김영희'],['운영위원장','이철수'],['구의원','박민수'],['구의원','최지은'],['구의원','정다은']].map(([pos,name])=>({id:uid(),pos,name,photo:'',checked:false,time:'',by:''}))}
-function phGet(id,prev){if(!prev)return'';const v=ls.get('pcb.ph.'+id);return v&&v.p===prev?v.d:null}
-function phPut(id,prev,d){ls.set('pcb.ph.'+id,{p:prev,d:d||''})}
+const PHM=new Map();
+function phGet(id,prev){if(!prev)return'';let v=PHM.get(id);if(!v||v.p!==prev){v=ls.get('pcb.ph.'+id);if(v)PHM.set(id,v)}return v&&v.p===prev?v.d:null}
+function phPut(id,prev,d){const v={p:prev,d:d||''};PHM.set(id,v);ls.set('pcb.ph.'+id,v)}
 let S,ver=0;
 function initData(){
   ver=0;
@@ -663,15 +667,37 @@ function call(req){
   return fetch(BAKED||P.api,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(req)})
     .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
 }
-let pending=0,pT=null,online=null,lastSync='';
+let pending=0,pT=null,online=null,lastSync='',lastChange=Date.now();
+/* 보내지 못한 도착 체크는 휴대폰에 모아 두었다가 연결되면 순서대로 다시 보낸다 */
+let OUT=ls.get('pcb.out')||[];
+function outOverlay(list){OUT.forEach(o=>{const m=list.find(x=>x.id===o.id);if(m){m.checked=o.checked;m.time=o.time;m.by=o.by}})}
+function queueCheck(o){OUT=OUT.filter(x=>x.id!==o.id);OUT.push(o);ls.set('pcb.out',OUT);syncUI();flushOut()}
+let flushing=false;
+async function flushOut(){
+  if(flushing||!OUT.length||!server())return;flushing=true;
+  try{
+    while(OUT.length){
+      const o=OUT[0];pending++;let r;
+      try{r=await call({a:'check',pin:P.pin,by:o.by,actor:P.name,time:o.time,id:o.id,checked:o.checked})}
+      catch(_){setOnline(false);break}finally{pending--}
+      if(r&&(r.ok||r.error==='대상 없음')){OUT.shift();ls.set('pcb.out',OUT);if(!OUT.length&&r.ok){ver=0;applyState(r)}setOnline(true)}
+      else break;
+    }
+  }finally{flushing=false;syncUI()}
+}
+addEventListener('online',()=>{flushOut();poll()});
 function setOnline(v){online=v;if(v)lastSync=hms();syncUI()}
 function syncUI(){
   const el=$('sync');el.className='sync'+(server()?(online?' on':online===false?' off':''):'');
-  $('syncTxt').textContent=!server()?'로컬 모드 — 이 휴대폰에만 저장':online?`실시간 공유 중 · ${lastSync} 갱신`:online===false?'연결 끊김 — 자동 재시도 중':'공유 서버 연결 중…';
+  const q=OUT.length?` · 전송 대기 ${OUT.length}건`:'';
+  $('syncTxt').textContent=!server()?'로컬 모드 — 이 휴대폰에만 저장':online?`실시간 공유 중 · ${lastSync} 갱신${q}`:online===false?`연결 끊김 — 자동 재시도 중${q||' '}`.trim():'공유 서버 연결 중…';
+  el.classList.toggle('wait',!!OUT.length);
 }
 let synced=false;
 function applyState(r){
   if(!r||!r.ok||r.same)return;
+  lastChange=Date.now();
+  if(OUT.length)outOverlay(r.members);
   const prev=new Map((S.members||[]).map(m=>[m.id,m]));
   const lastSeq=(S.chat||[]).reduce((a,c)=>Math.max(a,c.s||0),0);
   const ev=[];
@@ -695,10 +721,11 @@ async function poll(){
   clearTimeout(pT);
   if(!server())return;
   if(!document.hidden){
-    try{const r=await call({a:'state',ver,dev:P.dev,by:P.name});if(r&&r.on){S.on=r.on;renderOn()}if(!pending)applyState(r);setOnline(true)}
+    try{const r=await call({a:'state',ver,dev:P.dev,by:P.name});if(r&&r.on){S.on=r.on;renderOn()}if(!pending)applyState(r);setOnline(true);if(OUT.length)flushOut()}
     catch(_){setOnline(false)}
   }
-  pT=setTimeout(poll,online===false?6000:3500);
+  // 최근 2분 안에 변화가 있으면 3초, 조용하면 5초, 끊기면 6초 간격
+  pT=setTimeout(poll,online===false?6000:Date.now()-lastChange<120000?3000:5000);
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&server())poll()});
 async function write(req,pre){
@@ -750,8 +777,8 @@ function ensureName(){
 /* ---------- 데이터 조작 (로컬/공유 공통) ---------- */
 function opCheck(m,checked,time,by){
   m.checked=checked;m.time=checked?time:'';m.by=checked?by:'';
-  saveLocal();render();
-  if(server())write({a:'check',id:m.id,checked,time:m.time,by:m.by});
+  saveLocal();render();lastChange=Date.now();
+  if(server())queueCheck({id:m.id,checked,time:m.time,by:m.by});
 }
 function opUpsert(u){
   let m=S.members.find(x=>x.id===u.id);
@@ -785,7 +812,7 @@ function evLine(){return [fmtDate(S.date),S.time,S.place].filter(Boolean).join('
 function filtered(f){return S.members.filter(m=>f==='in'?m.checked:f==='out'?!m.checked:true)}
 function render(){
   renderPlanBar();
-  $('evTitle').textContent=S.title||'행사명을 입력하세요';$('evTitle').classList.toggle('ph',!S.title);
+  $('evTitle').textContent=S.title||'행사명을 입력하세요';{const L=(S.title||'').length;$('evTitle').classList.toggle('long',L>12&&L<=24);$('evTitle').classList.toggle('xlong',L>24)}$('evTitle').classList.toggle('ph',!S.title);
   $('evSub').textContent=evLine()||'날짜·시각·장소를 입력하세요';
   document.title=S.title?S.title+' · 의전 체크':'의전 체크 보드';
   const g=$('grid');g.style.setProperty('--cols',P.cols);g.classList.toggle('c4',P.cols>=4);

@@ -6,6 +6,7 @@ const EDIT_PIN = '0000';        // ← 명단 편집 비밀번호 (반드시 바
 const SHEET = '명단';
 const LOGSHEET = '체크기록';
 const CHATSHEET = '채팅';
+const LOCSHEET = '위치';
 const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo'];
 
 /* 보드 화면 제공 */
@@ -37,9 +38,11 @@ function api(q) {
   if (q.a === 'state') return state_(q.ver);
   if (q.a === 'photos') return photos_(q.ids || []);
   if (q.a === 'log') return { ok: true, log: log_() };
+  if (q.a === 'locs') return { ok: true, now: Date.now(), locs: locs_() };
+  if (q.a === 'loc') return loc_(q);
   if (q.a === 'pin') return String(q.pin) === String(EDIT_PIN) ? { ok: true } : { ok: false, error: 'pin' };
 
-  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear'];
+  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey'];
   if (editOps.indexOf(q.a) >= 0 && String(q.pin) !== String(EDIT_PIN)) return { ok: false, error: 'pin' };
 
   const lock = LockService.getScriptLock();
@@ -107,6 +110,9 @@ function api(q) {
       const cs = chatSheet_();
       if (cs.getLastRow() > 1) cs.deleteRows(2, cs.getLastRow() - 1);
 
+    } else if (q.a === 'vwkey') {
+      PropertiesService.getScriptProperties().setProperty('vwKey', String(q.key || '').trim());
+
     } else if (q.a === 'meta') {
       PropertiesService.getScriptProperties().setProperties({ title: String(q.title || ''), date: String(q.date || ''), time: String(q.time || ''), place: String(q.place || '') });
 
@@ -138,7 +144,7 @@ function ss_() {
 /* 처음 한 번 실행: 권한 승인 + 저장용 시트 만들기 (편집기에서 ▶실행) */
 function setup() {
   const s = ss_();
-  sheet_(); logSheet_(); chatSheet_();
+  sheet_(); logSheet_(); chatSheet_(); locSheet_();
   Logger.log('준비 완료. 저장용 시트: ' + s.getUrl());
 }
 
@@ -170,7 +176,7 @@ function state_(ver) {
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
     id: o.id, pos: o.pos, name: o.name, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
-  return { ok: true, ver: cur, chat: chat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '' }, members: members };
+  return { ok: true, ver: cur, chat: chat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
 }
 
 function photos_(ids) {
@@ -231,4 +237,55 @@ function chat_() {
   const k = Math.min(n, 50);
   return sh.getRange(sh.getLastRow() - k + 1, 1, k, 4).getDisplayValues()
     .map(x => ({ s: Number(x[0]) || 0, t: x[1], by: x[2], x: x[3] }));
+}
+
+/* ---------- 위치 (사람마다 1줄, 최신 위치만 보관) ---------- */
+function locSheet_() {
+  const ss = ss_();
+  let sh = ss.getSheetByName(LOCSHEET);
+  if (!sh) {
+    sh = ss.insertSheet(LOCSHEET);
+    sh.getRange('A:G').setNumberFormat('@');
+    sh.getRange(1, 1, 1, 7).setValues([['기기', '이름', '위도', '경도', '정확도(m)', '시각(ms)', '서버기록']]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function loc_(q) {
+  const dev = String(q.dev || '').slice(0, 40);
+  if (!dev) return { ok: false, error: '기기 없음' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sh = locSheet_();
+    const n = sh.getLastRow() - 1;
+    const ids = n > 0 ? sh.getRange(2, 1, n, 1).getDisplayValues().map(x => x[0]) : [];
+    const i = ids.indexOf(dev);
+    if (q.off) {
+      if (i >= 0) sh.deleteRow(i + 2);
+      return { ok: true };
+    }
+    const lat = Number(q.lat), lng = Number(q.lng);
+    if (!isFinite(lat) || !isFinite(lng)) return { ok: false, error: '좌표 없음' };
+    const row = [dev, String(q.by || '').slice(0, 30), lat.toFixed(6), lng.toFixed(6),
+      String(Math.round(Number(q.acc) || 0)), String(Date.now()),
+      Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss')];
+    if (i >= 0) sh.getRange(i + 2, 1, 1, 7).setValues([row]);
+    else sh.appendRow(row);
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* 최근 12시간 안에 보낸 위치만 */
+function locs_() {
+  const sh = locSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return [];
+  const lim = Date.now() - 12 * 3600 * 1000;
+  return sh.getRange(2, 1, n, 6).getDisplayValues()
+    .map(x => ({ dev: x[0], by: x[1], lat: Number(x[2]), lng: Number(x[3]), acc: Number(x[4]) || 0, t: Number(x[5]) || 0 }))
+    .filter(o => o.t > lim && isFinite(o.lat) && isFinite(o.lng));
 }

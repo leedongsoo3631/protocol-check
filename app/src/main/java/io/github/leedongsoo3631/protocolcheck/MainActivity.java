@@ -20,6 +20,7 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
+import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -59,6 +60,9 @@ public class MainActivity extends ComponentActivity {
     private ValueCallback<Uri[]> fileCallback;
     private ActivityResultLauncher<Intent> picker;
     private ActivityResultLauncher<String> notifPerm;
+    private ActivityResultLauncher<String[]> locPerm;
+    private GeolocationPermissions.Callback geoCb;
+    private String geoOrigin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +109,12 @@ public class MainActivity extends ComponentActivity {
             if (!granted) Toast.makeText(this, "알림을 허용해야 화면이 꺼져 있을 때 알림을 받을 수 있습니다", Toast.LENGTH_LONG).show();
         });
         WatchService.channels(this);
+        locPerm = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), res -> {
+            boolean ok = Boolean.TRUE.equals(res.get(Manifest.permission.ACCESS_FINE_LOCATION))
+                    || Boolean.TRUE.equals(res.get(Manifest.permission.ACCESS_COARSE_LOCATION));
+            if (geoCb != null) geoCb.invoke(geoOrigin, ok, false);
+            geoCb = null;
+        });
 
         WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
                 .setDomain(HOST)
@@ -117,6 +127,7 @@ public class MainActivity extends ComponentActivity {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setTextZoom(100);
+        s.setGeolocationEnabled(true);
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -137,6 +148,18 @@ public class MainActivity extends ComponentActivity {
         });
 
         web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                        || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    callback.invoke(origin, true, false);
+                    return;
+                }
+                geoCb = callback;
+                geoOrigin = origin;
+                locPerm.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION});
+            }
+
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);

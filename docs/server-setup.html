@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>의전 체크 공유 서버 만들기</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--ink:#1c1c1e;--sub:#6e6e73;--line:rgba(60,60,67,.14);--acc:#0a64d8;--acc2:#e8f1fd;--ok:#14a05c}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--ink:#f2f2f7;--sub:#a1a1a6;--line:rgba(255,255,255,.12);--acc:#3a8bff;--acc2:rgba(58,139,255,.16);--ok:#30d158}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
+.hero{display:flex;gap:16px;align-items:center;margin-bottom:8px}
+.logo{width:56px;height:56px;border-radius:15px;background:linear-gradient(145deg,#2f86ff,#0a5bd0);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(10,100,216,.3);flex:none}
+.logo svg{width:30px;height:30px;stroke:#fff;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+h1{font-size:28px;letter-spacing:-.02em;margin:0;line-height:1.25}
+.lead{color:var(--sub);font-size:16px;margin:12px 0 28px;word-break:keep-all}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px}
+.facts div{background:var(--card);border-radius:14px;padding:14px;box-shadow:inset 0 0 0 .5px var(--line)}
+.facts b{display:block;font-size:20px}.facts span{font-size:13px;color:var(--sub)}
+ol{list-style:none;counter-reset:s;padding:0;margin:0}
+ol>li{counter-increment:s;background:var(--card);border-radius:18px;padding:18px 18px 18px 64px;margin-bottom:12px;position:relative;box-shadow:inset 0 0 0 .5px var(--line)}
+ol>li::before{content:counter(s);position:absolute;left:18px;top:18px;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+h2{font-size:18px;margin:2px 0 6px}
+p{margin:6px 0;font-size:15px;word-break:keep-all}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;background:var(--acc2);color:var(--acc);border-radius:6px;padding:1px 6px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:11px;background:var(--acc);color:#fff;font:inherit;font-weight:600;font-size:15px;padding:10px 16px;margin-top:8px;cursor:pointer;text-decoration:none}
+.btn.sec{background:var(--acc2);color:var(--acc)}
+.tip{background:var(--acc2);border-radius:12px;padding:10px 14px;font-size:14px;margin-top:10px}
+.path{font-weight:600}
+#msg{font-size:14px;color:var(--ok);margin-left:8px}
+footer{color:var(--sub);font-size:13px;margin-top:28px;text-align:center}
+@media (max-width:560px){.facts{grid-template-columns:1fr}ol>li{padding-left:56px}}
+</style>
+</head>
+<body>
+<main>
+<div class="hero"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h1>의전 체크<br>공유 서버 만들기</h1></div>
+<p class="lead">우리 부서·기관 전용 공유 서버를 구글 계정 하나로 무료로 만듭니다. 명단·체크 기록·채팅은 만든 사람의 구글 드라이브에 있는 스프레드시트에만 저장됩니다.</p>
+<div class="facts"><div><b>10분</b><span>컴퓨터 크롬 기준</span></div><div><b>무료</b><span>구글 계정만 있으면 됨</span></div><div><b>내 드라이브</b><span>데이터 저장 위치</span></div></div>
+<ol>
+<li><h2>Apps Script 새 프로젝트 열기</h2><p>크롬에서 구글 계정으로 로그인한 상태로 엽니다. 위쪽 '제목 없는 프로젝트'를 눌러 <b>의전 체크 서버</b>로 이름을 바꿔 두면 찾기 쉽습니다.</p>
+<a class="btn" href="https://script.google.com/create" target="_blank" rel="noopener">script.google.com/create 열기 ↗</a></li>
+<li><h2>서버 코드 붙여넣기</h2><p>편집기에 있는 내용을 모두 지우고(<code>Ctrl+A</code> → <code>Delete</code>) 아래 버튼으로 복사한 코드를 붙여넣습니다(<code>Ctrl+V</code>).</p>
+<button class="btn" id="copy">서버 코드 복사</button><span id="msg"></span>
+<a class="btn sec" href="https://github.com/leedongsoo3631/protocol-check/blob/main/server/Code.gs" target="_blank" rel="noopener">코드 보기 ↗</a></li>
+<li><h2>편집 비밀번호 정하기</h2><p>코드 맨 위 <code>const EDIT_PIN = '0000';</code> 에서 <code>0000</code>을 원하는 숫자로 바꾸고 저장(<code>Ctrl+S</code>)합니다. 명단·좌석·일정을 고칠 때 쓰는 비밀번호입니다.</p></li>
+<li><h2>준비 실행 (권한 허용)</h2><p>위쪽 함수 목록에서 <code>setup</code>을 고르고 <span class="path">▶ 실행</span>을 누릅니다.</p>
+<p><span class="path">권한 검토 → 내 계정 선택 → 고급 → '의전 체크 서버(으)로 이동(안전하지 않음)' → 허용</span></p>
+<div class="tip">'안전하지 않음'은 구글이 심사하지 않은 개인 코드라는 뜻입니다. 이 코드는 내 드라이브의 시트 하나만 만들고 씁니다.</div></li>
+<li><h2>웹 앱으로 배포</h2><p><span class="path">배포 → 새 배포 → 톱니바퀴 ⚙ → 웹 앱</span></p>
+<p>다음 사용자 인증 정보로 실행: <b>나</b> · 액세스 권한이 있는 사용자: <b>모든 사용자</b> → <b>배포</b></p>
+<p>나온 <b>웹 앱 URL</b>(<code>https://script.google.com/macros/s/…/exec</code>)을 복사합니다.</p></li>
+<li><h2>앱에 연결</h2><p>의전 체크 앱 <span class="path">☰ 메뉴 → 내 공유 서버 만들기 → 6번 칸</span>에 붙여넣고 <b>연결 확인하고 저장</b>을 누릅니다. 설정의 '공유 서버 주소' 칸에 넣어도 됩니다.</p></li>
+<li><h2>담당자 초대</h2><p>앱 <span class="path">☰ 메뉴 → 담당자 초대하기</span>로 복사된 문구를 카톡방에 보내세요. 받은 사람은 그 문구를 통째로 설정의 서버 주소 칸에 붙여넣으면 바로 연결됩니다.</p></li>
+</ol>
+<div class="tip" style="margin-top:6px"><b>코드를 업데이트할 때</b> — 새 코드를 붙여넣고 저장한 뒤 <span class="path">배포 → 배포 관리 → ✏️ → 버전: 새 버전 → 배포</span>. 주소가 바뀌지 않아 담당자들은 아무것도 할 필요가 없습니다.</div>
+<footer>의전 체크 · <a href="privacy.html" style="color:inherit">개인정보처리방침</a></footer>
+</main>
+<script>
+document.getElementById('copy').onclick=async()=>{const m=document.getElementById('msg');m.textContent='불러오는 중…';
+  try{const t=await fetch('https://raw.githubusercontent.com/leedongsoo3631/protocol-check/main/server/Code.gs',{cache:'no-store'}).then(r=>r.text());
+    await navigator.clipboard.writeText(t);m.textContent='복사했습니다 ('+t.split('\n').length+'줄)'}catch(e){m.textContent='복사 실패 — "코드 보기"에서 Raw 버튼으로 복사하세요'}};
+</script>
+</body>
+</html>

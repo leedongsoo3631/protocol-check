@@ -356,6 +356,68 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
 .ssRow input::placeholder{color:var(--faint);font-weight:400;font-size:11px}
 .ssRow input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent);background:var(--surface)}
 #seatPrev{width:100%;border-radius:10px;display:block;margin-bottom:10px}
+/* 검색 */
+#findBar{display:flex;align-items:center;gap:8px;margin:12px max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));background:var(--fill);border-radius:11px;padding:0 6px 0 11px;height:38px}
+#findBar svg{width:16px;height:16px;flex:none;stroke:var(--sub);fill:none;stroke-width:2.2;stroke-linecap:round}
+#findBar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font-size:16px;font-family:inherit;padding:0;height:100%}
+#findBar input:focus{outline:none}
+#findBar input::-webkit-search-cancel-button{display:none}
+#findX{flex:none;width:22px;height:22px;border-radius:50%;border:0;background:var(--faint);color:var(--bg);font-size:12px;line-height:22px;padding:0;font-weight:700}
+body.seat #findBar{display:none}
+/* 결과 보고 */
+#mReport h3 small,#mGuide h3 small{font-size:13px;color:var(--sub);font-weight:500;margin-left:6px}
+.rpEv{font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0 4px 12px;line-height:1.3;word-break:keep-all}
+.rpEv small{display:block;font-size:13px;color:var(--sub);font-weight:500;margin-top:2px}
+.kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.kpi div{background:var(--surface);border-radius:14px;padding:12px 6px 10px;text-align:center;box-shadow:inset 0 0 0 .5px var(--line)}
+.kpi div:nth-child(2){background:var(--ok);box-shadow:none;color:#fff}
+.kpi b{display:block;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.2}
+.kpi b em{font-style:normal;font-size:13px;font-weight:600;opacity:.6;margin-left:1px}
+.kpi span{display:block;font-size:11.5px;color:var(--sub);margin-top:3px}
+.kpi div:nth-child(2) span{color:rgba(255,255,255,.85)}
+.rpNote{font-size:13.5px;color:var(--sub);margin:-2px 4px 12px}.rpNote b{color:var(--ink)}
+.bins{display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:16px}
+.bin{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.bin i{display:block;width:100%;max-width:28px;min-height:3px;background:var(--accent);border-radius:6px 6px 2px 2px;position:relative;opacity:.85}
+.bin.at i{background:var(--ok);opacity:1}
+.bin i em{position:absolute;top:-17px;left:0;right:0;text-align:center;font-style:normal;font-size:11px;font-weight:700;color:var(--ink)}
+.bin span{font-size:9.5px;color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.arl>div{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:.5px solid var(--line)}
+.arl>div:first-child{border-top:0;padding-top:2px}
+.arl em{flex:none;width:24px;height:24px;border-radius:50%;background:var(--okbg);color:var(--ok);font-style:normal;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.arl b{flex:none;width:46px;font-variant-numeric:tabular-nums;font-size:15px}
+.arl span{flex:1;min-width:0;font-size:15px;font-weight:600}
+.arl span small{display:block;font-size:12px;color:var(--sub);font-weight:400}
+.arl i{font-style:normal;font-size:12px;color:var(--faint)}
+.outs{display:flex;flex-wrap:wrap;gap:6px}
+.outs span{font-size:13px;background:var(--fill);border-radius:8px;padding:5px 9px}
+/* 처음 사용 안내 */
+.onb{padding-top:18px}
+.onbHero{text-align:center;padding:6px 10px 18px}
+.onbIc{width:68px;height:68px;border-radius:18px;margin:0 auto 12px;background:linear-gradient(145deg,#2f86ff,#0a5bd0);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(10,100,216,.32),inset 0 1px 0 rgba(255,255,255,.35)}
+.onbIc svg{width:36px;height:36px;stroke:#fff;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.onbHero h3{margin:0 0 6px;font-size:26px;letter-spacing:-.02em}
+.onbHero p{margin:0;color:var(--sub);font-size:14.5px;line-height:1.5;word-break:keep-all}
+.onbList{background:var(--surface);border-radius:16px;padding:4px 14px;margin-bottom:14px;box-shadow:inset 0 0 0 .5px var(--line)}
+.onbList>div{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:.5px solid var(--line)}
+.onbList>div:first-child{border-top:0}
+.onbList i{flex:none;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.onbList i svg{width:17px;height:17px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.onbList span{font-size:13.5px;color:var(--sub);line-height:1.5;word-break:keep-all}
+.onbList span b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+/* 서버 만들기 안내 */
+ol.gd{list-style:none;counter-reset:g;margin:0 0 6px;padding:0}
+ol.gd li{counter-increment:g;position:relative;padding:12px 14px 12px 50px;background:var(--surface);border-radius:14px;margin-bottom:8px;box-shadow:inset 0 0 0 .5px var(--line)}
+ol.gd li::before{content:counter(g);position:absolute;left:14px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+ol.gd b{display:block;font-size:15px;margin-bottom:3px}
+ol.gd span{display:block;font-size:13px;color:var(--sub);line-height:1.6;word-break:keep-all}
+ol.gd code{font-size:12px;background:var(--fill);border-radius:5px;padding:1px 5px;color:var(--ink);word-break:break-all}
+.gdLink{display:flex;align-items:center;gap:8px;margin-top:8px}
+.gdLink code{flex:1;font-size:13px;padding:8px 10px}
+.gdLink .btn,.gdBtn{padding:9px 14px;font-size:14px}
+.gdBtn{width:100%;margin-top:8px}
+#gdMsg{margin:6px 0 0}
+#sGuide{width:100%;margin-top:8px;font-size:14px;padding:10px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -377,6 +439,7 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   <div class="sync" id="sync"><i></i><span id="syncTxt">로컬 모드</span></div>
 </header>
 <div class="editnote">편집 모드 — 카드를 눌러 수정하세요</div>
+<div id="findBar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><input id="find" type="search" placeholder="이름·직위 검색" autocomplete="off" enterkeyhint="search"><button id="findX" hidden aria-label="검색 지우기">✕</button></div>
 <main id="grid"></main>
 <section id="seatView" hidden>
   <div id="svTool"><span id="svSum"></span><button id="svSet">좌석 설정</button><button id="svExp">좌석표 보내기</button></div>
@@ -440,6 +503,8 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   <div class="grp">
   <button class="btn" id="mInfoB"><span class="ic" style="background:#0a64d8"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/></svg></span><span class="tx">행사 정보<small>행사명·일시·장소</small></span></button>
   <button class="btn" id="mLog"><span class="ic" style="background:#8e8e93"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span><span class="tx">체크 기록</span></button>
+  <button class="btn" id="mReportB"><span class="ic" style="background:#14a05c"><svg viewBox="0 0 24 24"><path d="M5 19V9M10 19V5M15 19v-7M20 19v-4"/></svg></span><span class="tx">행사 결과 보고<small>도착률·도착 순서·시간대</small></span></button>
+  <button class="btn" id="mNewEvB"><span class="ic" style="background:#5856d6"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="tx">새 행사 시작<small>명단은 두고 기록만 정리</small></span></button>
   </div>
   <div class="grp">
   <button class="btn" id="mBulk"><span class="ic" style="background:#34a853"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="2.4"/></svg></span><span class="tx">명단 한꺼번에 입력</span></button>
@@ -454,6 +519,9 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   </div>
   <div class="grp">
   <button class="btn" id="mSet"><span class="ic" style="background:#636366"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg></span><span class="tx">설정<small>내 이름·공유 서버</small></span></button>
+  <button class="btn" id="mInviteB"><span class="ic" style="background:#ffcc00"><svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M18 8v6M15 11h6"/></svg></span><span class="tx">담당자 초대하기<small>카톡으로 보낼 연결 문구 복사</small></span></button>
+  <button class="btn" id="mGuideB"><span class="ic" style="background:#34c759"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01" stroke-width="2.6"/></svg></span><span class="tx">내 공유 서버 만들기<small>다른 부서·기관용 안내</small></span></button>
+  <button class="btn" id="mHelpB"><span class="ic" style="background:#8e8e93"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9.8 9.5a2.3 2.3 0 0 1 4.4.9c0 1.5-2.2 2-2.2 3.3M12 16.5h.01"/></svg></span><span class="tx">사용 안내</span></button>
   <button class="btn" id="mAppB"><span class="ic" style="background:#30b0c7"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/></svg></span><span class="tx">홈 화면에 설치하기</span></button>
   </div>
   <button class="btn" id="mClose">닫기</button>
@@ -465,7 +533,8 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   <h3>설정</h3>
   <div class="fld"><label>내 이름 (체크 기록에 남습니다)</label><input id="sName" placeholder="예: 이동수"></div>
   <div class="fld" id="sApiWrap"><label>공유 서버 주소 (Apps Script 웹 앱 URL)</label><input id="sApi" placeholder="https://script.google.com/macros/s/.../exec" inputmode="url">
-    <p class="hint">중구청 공유 서버가 기본으로 들어 있습니다. 다른 서버를 쓸 때만 바꾸세요.</p></div>
+    <p class="hint">중구청 공유 서버가 기본으로 들어 있습니다. 받은 초대 문구를 통째로 붙여넣어도 주소만 골라 연결합니다.</p>
+    <button class="btn" id="sGuide">내 공유 서버 만들기 안내</button></div>
   <span class="swl">알림</span>
   <div class="swg">
     <label class="sw"><span>진동</span><input type="checkbox" id="sVib"></label>
@@ -588,6 +657,72 @@ body.edit .st{outline:1.5px dashed var(--accent);outline-offset:-1.5px}
   <img id="seatPrev" alt="좌석표 미리보기">
   <div class="row"><button class="btn ok" id="sxShare">카톡 등으로 공유</button><button class="btn" id="sxSave">이미지 저장</button></div>
   <button class="btn mt" style="width:100%" id="sxClose">닫기</button>
+</div></div>
+
+<!-- 행사 결과 보고 -->
+<div class="mask" id="mReport"><div class="sheet">
+  <h3>행사 결과 보고 <small id="rpSub"></small></h3>
+  <div id="rpBody"></div>
+  <div class="row mt"><button class="btn" id="rpText">텍스트 복사</button><button class="btn pri" id="rpImg">보고 이미지</button></div>
+  <div id="rpOut" hidden class="mt"><img id="rpPrev" alt="결과 보고 미리보기" style="width:100%;border-radius:12px;display:block;margin-bottom:10px">
+    <div class="row"><button class="btn ok" id="rpShare">카톡 등으로 공유</button><button class="btn" id="rpSave">이미지 저장</button></div></div>
+  <button class="btn mt" style="width:100%" id="rpClose">닫기</button>
+</div></div>
+
+<!-- 새 행사 시작 -->
+<div class="mask" id="mNewEv"><div class="sheet">
+  <h3>새 행사 시작</h3>
+  <p class="hint" style="margin-top:0">명단과 사진은 그대로 두고, 지난 행사의 기록만 정리합니다. 지난 결과를 남기려면 먼저 <b>행사 결과 보고</b>에서 이미지를 저장하세요.</p>
+  <div class="fld"><label for="nTitle">새 행사명</label><input id="nTitle" placeholder="예: 2026 중구 체육대회 개회식"></div>
+  <div class="ssg">
+    <div class="fld"><label for="nDate">날짜</label><input id="nDate" type="date"></div>
+    <div class="fld"><label for="nTime">시각</label><input id="nTime" placeholder="예: 10:00" inputmode="numeric"></div>
+  </div>
+  <div class="fld"><label for="nPlace">장소</label><input id="nPlace" placeholder="예: 중구청 대회의실"></div>
+  <span class="swl">정리할 항목</span>
+  <div class="swg">
+    <label class="sw"><span>도착 체크 모두 해제</span><input type="checkbox" id="nChk" checked></label>
+    <label class="sw" data-srv><span>채팅 비우기</span><input type="checkbox" id="nChat" checked></label>
+    <label class="sw" data-srv><span>체크 기록 비우기</span><input type="checkbox" id="nLog" checked></label>
+    <label class="sw"><span>일정·메모 비우기</span><input type="checkbox" id="nPlan" checked></label>
+    <label class="sw"><span>좌석 이름 비우기<small>좌석 칸 모양은 남깁니다</small></span><input type="checkbox" id="nSeat"></label>
+  </div>
+  <div class="row mt"><button class="btn" id="nCancel">취소</button><button class="btn pri" id="nGo">새 행사 시작</button></div>
+</div></div>
+
+<!-- 처음 사용 안내 -->
+<div class="mask" id="mOnb"><div class="sheet onb">
+  <div class="onbHero"><div class="onbIc"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h3>의전 체크</h3><p>행사장 도착 확인을 담당자 모두가 실시간으로 함께 봅니다</p></div>
+  <div class="onbList">
+    <div><i style="background:#14a05c"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span><b>카드를 누르면 도착</b>다시 누르면 해제됩니다. 잘못 눌렀으면 아래에 뜨는 '취소'를 누르세요.</span></div>
+    <div><i style="background:#0a64d8"><svg viewBox="0 0 24 24"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></svg></i><span><b>보내기</b>도착 현황을 사진이나 글로 만들어 카톡에 바로 보냅니다.</span></div>
+    <div><i style="background:#af52de"><svg viewBox="0 0 24 24"><path d="M4 5h16" stroke-width="2.4"/><rect x="4" y="9" width="4" height="4" rx="1"/><rect x="10" y="9" width="4" height="4" rx="1"/><rect x="16" y="9" width="4" height="4" rx="1"/></svg></i><span><b>좌석 · 일정 · 채팅 · 지도</b>좌석배치도, 행사 스케줄, 담당자 채팅과 위치를 한 앱에서 봅니다.</span></div>
+    <div><i style="background:#ff9500"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 14 0"/><path d="M12 12l3-3"/></svg></i><span><b>인터넷이 끊겨도 괜찮습니다</b>체크는 휴대폰에 보관됐다가 연결되면 자동으로 전송됩니다.</span></div>
+  </div>
+  <div class="fld" id="onbNameW"><label for="onbName">내 이름 (체크 기록과 채팅에 표시)</label><input id="onbName" placeholder="예: 이동수" autocomplete="name"></div>
+  <button class="btn pri" style="width:100%" id="onbGo">시작하기</button>
+</div></div>
+
+<!-- 내 공유 서버 만들기 -->
+<div class="mask" id="mGuide"><div class="sheet">
+  <h3>내 공유 서버 만들기</h3>
+  <p class="hint" style="margin-top:0">다른 부서·기관에서 따로 쓰려면 구글 계정으로 무료 공유 서버를 만들면 됩니다. 컴퓨터에서 하면 10분 정도 걸립니다. 데이터는 만든 사람의 구글 드라이브에만 저장됩니다.</p>
+  <ol class="gd">
+    <li><b>Apps Script 새 프로젝트 열기</b><span>컴퓨터 크롬에서 구글 계정으로 로그인한 뒤 아래 주소를 엽니다.</span>
+      <div class="gdLink"><code>script.google.com/create</code><button class="btn" id="gdOpen">열기</button></div></li>
+    <li><b>서버 코드 붙여넣기</b><span>편집기에 있던 내용을 모두 지우고(Ctrl+A → Delete) 복사한 코드를 붙여넣습니다.</span>
+      <button class="btn pri gdBtn" id="gdCode">서버 코드 복사</button></li>
+    <li><b>편집 비밀번호 정하기</b><span>코드 맨 위 <code>const EDIT_PIN = '0000';</code>의 0000을 원하는 숫자로 바꾸고 저장(💾)합니다. 명단 편집 때 쓰는 비밀번호입니다.</span></li>
+    <li><b>준비 실행</b><span>위쪽 함수 목록에서 <code>setup</code>을 고르고 ▶실행 → 권한 검토 → 계정 선택 → '고급' → '(안전하지 않음)으로 이동' → 허용. 내 드라이브에 '의전 체크 서버' 시트가 만들어집니다.</span></li>
+    <li><b>웹 앱으로 배포</b><span>오른쪽 위 '배포' → '새 배포' → 톱니바퀴에서 '웹 앱' → 실행: <b>나</b>, 액세스 권한: <b>모든 사용자</b> → 배포 → 나온 '웹 앱 URL'을 복사합니다.</span></li>
+    <li><b>이 앱에 연결</b><span>복사한 주소를 붙여넣고 연결을 확인합니다.</span>
+      <div class="fld" style="margin:8px 0 0"><input id="gdUrl" placeholder="https://script.google.com/macros/s/…/exec" inputmode="url" autocomplete="off" spellcheck="false"></div>
+      <button class="btn pri gdBtn" id="gdTest">연결 확인하고 저장</button><p class="hint" id="gdMsg"></p></li>
+    <li><b>담당자 초대</b><span>메뉴 → 담당자 초대하기로 초대 문구를 카톡에 보내면, 받은 사람은 문구를 그대로 설정의 서버 주소 칸에 붙여넣으면 됩니다.</span></li>
+  </ol>
+  <p class="hint">코드를 고친 뒤에는 '배포 → 배포 관리 → ✏️ → 버전: 새 버전 → 배포'로 같은 주소를 유지한 채 업데이트할 수 있습니다.</p>
+  <button class="btn" style="width:100%" id="gdClose">닫기</button>
 </div></div>
 
 <!-- 내보내기 -->
@@ -816,13 +951,13 @@ function render(){
   $('evSub').textContent=evLine()||'날짜·시각·장소를 입력하세요';
   document.title=S.title?S.title+' · 의전 체크':'의전 체크 보드';
   const g=$('grid');g.style.setProperty('--cols',P.cols);g.classList.toggle('c4',P.cols>=4);
-  const list=mode==='edit'?S.members:filtered(P.filter);
+  const list=(mode==='edit'?S.members:filtered(P.filter)).filter(matchFind);
   let h=list.map(m=>`<div class="card${m.checked?' ck':''}${m.photo===null?' wait':''}" data-id="${esc(m.id)}">
     <div class="ph" style="${m.photo?`background-image:url(${m.photo})`:''}">${m.photo?'':m.photo===null?'…':esc((m.name||'?').slice(0,1))}</div>
     <div class="badge"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="pen">✎ 수정</div>
     <div class="info"><div class="pos">${esc(m.pos)||'&nbsp;'}</div><div class="nm">${esc(m.name)||'(이름)'}</div>${noteLines(m).map(t=>`<div class="ex">${esc(t)}</div>`).join('')}
     <div class="tm">${m.checked?'도착 '+esc(m.time):'미도착'}</div></div></div>`).join('');
-  if(!list.length&&mode!=='edit')h=`<div class="empty">${S.members.length?'해당 인물이 없습니다':'명단이 비어 있습니다.<br>아래 ✏️편집 또는 ☰메뉴 → 명단 한꺼번에 입력으로 추가하세요.'}</div>`;
+  if(!list.length&&mode!=='edit')h=`<div class="empty">${findQ?`'${esc(findQ)}' 검색 결과가 없습니다`:S.members.length?'해당 인물이 없습니다':'명단이 비어 있습니다.<br>아래 ✏️편집 또는 ☰메뉴 → 명단 한꺼번에 입력으로 추가하세요.'}</div>`;
   h+=`<button class="addcard" id="addCard"><b>＋</b>인물 추가</button>`;
   g.innerHTML=h;
   const n=S.members.length,c=S.members.filter(m=>m.checked).length;
@@ -996,7 +1131,7 @@ $('sSave').onclick=()=>{
   P.vib=$('sVib').checked;P.snd=$('sSnd').checked;P.bg=$('sBg').checked;
   if(server()){const wl=$('sLoc').checked;if(wl!==(P.loc===true)){P.loc=wl;if(wl)startLoc();else stopLoc(true)}
     const vk=$('sVw').value.trim();if(vk!==(S.vw||'')){ensurePin().then(ok=>{if(ok)write({a:'vwkey',key:vk}).then(()=>{if(map)setTiles()})})}}
-  const api=$('sApi').value.trim();
+  const api=pickApi($('sApi').value)||$('sApi').value.trim();
   const changed=!(GAS||BAKED)&&api!==P.api;
   if(changed&&api&&!/^https:\/\/script\.google(usercontent)?\.com\//.test(api)){toast('Apps Script 웹 앱 주소(https://script.google.com/...)를 입력하세요');return}
   if(changed){P.api=api;P.pin='';online=null}
@@ -1463,7 +1598,7 @@ function seatMembers(){const s=S.seat;if(!s)return new Map();const mm=new Map(S.
   for(const k in s.a||{}){const v=s.a[k];if(v&&v[0]!=='#'&&mm.has(v))o.set(k,mm.get(v))}return o}
 function renderSeat(){
   const sv=$('seatView'),on=P.view==='seat';
-  sv.hidden=!on;$('grid').hidden=on;$('bCols').hidden=on;
+  sv.hidden=!on;$('grid').hidden=on;$('bCols').hidden=on;document.body.classList.toggle('seat',on);
   $('bView').querySelector('em').textContent=on?'카드':'좌석';$('bView').querySelector('span').innerHTML=on?ICON_CARD:ICON_SEAT;
   document.querySelector('.editnote').textContent=on?'편집 모드 — 자리를 눌러 인물을 지정하세요':'편집 모드 — 카드를 눌러 수정하세요';
   if(!on)return;
@@ -1628,11 +1763,161 @@ $('sxShare').onclick=()=>seatBlob&&shareBlob(seatBlob,seatFname());
 $('sxSave').onclick=()=>seatBlob&&saveBlob(seatBlob,seatFname());
 $('sxClose').onclick=()=>close('mSeatX');
 
+/* ---------- 공통: 텍스트 복사 ---------- */
+async function copyTxt(t,msg){
+  if(AB&&AB.copyText&&AB.copyText(t)){toast(msg);return true}
+  try{await navigator.clipboard.writeText(t);toast(msg);return true}
+  catch(_){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy')}catch(__){}ta.remove();if(ok){toast(msg);return true}alert(t);return false}
+}
+
+/* ---------- 이름 검색 ---------- */
+let findQ='';
+const norm=s=>String(s||'').replace(/\s+/g,'').toLowerCase();
+function matchFind(m){if(!findQ)return true;const q=norm(findQ);return norm(m.name).includes(q)||norm(m.pos).includes(q)||norm(m.note).includes(q)}
+$('find').addEventListener('input',()=>{findQ=$('find').value;$('findX').hidden=!findQ;render()});
+$('findX').onclick=()=>{$('find').value='';findQ='';$('findX').hidden=true;render();$('find').blur()};
+$('find').addEventListener('keydown',e=>{if(e.key==='Enter'){$('find').blur();
+  const l=(mode==='edit'?S.members:filtered(P.filter)).filter(matchFind);if(l.length===1&&mode!=='edit'){toggleCheck(l[0]);$('findX').click()}}});
+
+/* ---------- 행사 결과 보고 ---------- */
+function arrivals(){return S.members.filter(m=>m.checked).slice().sort((a,b)=>(tMin(a.time)??9999)-(tMin(b.time)??9999))}
+function reportData(){
+  const n=S.members.length,ar=arrivals(),outs=S.members.filter(m=>!m.checked);
+  const ts=ar.map(m=>tMin(m.time)).filter(v=>v!=null),start=tMin(S.time);
+  const ontime=start==null?null:ar.filter(m=>{const t=tMin(m.time);return t!=null&&t<=start}).length;
+  // 10분 단위 도착 분포
+  let bins=[];if(ts.length){const lo=Math.floor(Math.min(...ts)/10)*10,hi=Math.floor(Math.max(...ts)/10)*10;
+    for(let t=lo;t<=hi;t+=10)bins.push({t,c:ts.filter(v=>v>=t&&v<t+10).length});if(bins.length>18)bins=bins.slice(-18)}
+  return {n,ar,outs,rate:n?Math.round(ar.length/n*100):0,first:ar[0]&&ar[0].time,last:ar.length?ar[ar.length-1].time:'',ontime,start,bins};
+}
+const mmHM=t=>pad(Math.floor(t/60))+':'+pad(t%60);
+function openReport(){
+  const d=reportData();
+  $('rpSub').textContent=[fmtDate(S.date),hm()+' 기준'].filter(Boolean).join(' · ');
+  const max=Math.max(1,...d.bins.map(b=>b.c));
+  $('rpBody').innerHTML=`<div class="rpEv">${esc(evName())}<small>${esc(evLine())}</small></div>
+  <div class="kpi"><div><b>${d.ar.length}<em>/${d.n}</em></b><span>도착</span></div><div><b>${d.rate}<em>%</em></b><span>도착률</span></div>
+   <div><b>${d.first||'—'}</b><span>첫 도착</span></div><div><b>${d.last||'—'}</b><span>마지막 도착</span></div></div>
+  ${d.start!=null&&d.ar.length?`<p class="rpNote">행사 시각 ${esc(S.time)} 기준 · 정시 도착 <b>${d.ontime}명</b> · 이후 도착 <b>${d.ar.length-d.ontime}명</b></p>`:''}
+  ${d.bins.length>1?`<div class="plSec"><h4>도착 시간대 (10분 단위)</h4><div class="bins">${d.bins.map(b=>`<div class="bin${d.start!=null&&b.t<=d.start&&d.start<b.t+10?' at':''}"><i style="height:${Math.round(b.c/max*100)}%">${b.c?`<em>${b.c}</em>`:''}</i><span>${mmHM(b.t)}</span></div>`).join('')}</div></div>`:''}
+  <div class="plSec"><h4>도착 순서 (${d.ar.length}명)</h4>${d.ar.length?`<div class="arl">${d.ar.map((m,i)=>`<div><em>${i+1}</em><b>${esc(m.time)}</b><span>${esc(m.name)}<small>${esc(m.pos)}${seatOf(m.id)?' · '+esc(seatOf(m.id)):''}</small></span><i>${esc(m.by||'')}</i></div>`).join('')}</div>`:'<p class="hint" style="margin:0">아직 도착한 인물이 없습니다</p>'}</div>
+  ${d.outs.length?`<div class="plSec"><h4>미도착 (${d.outs.length}명)</h4><div class="outs">${d.outs.map(m=>`<span>${esc(m.pos?m.pos+' ':'')}${esc(m.name)}</span>`).join('')}</div></div>`:''}`;
+  $('rpOut').hidden=true;open('mReport');
+}
+function reportText(){
+  const d=reportData();
+  return `[${evName()} 결과]\n${[evLine(),hm()+' 기준'].filter(Boolean).join(' · ')}\n도착 ${d.ar.length}명 / 전체 ${d.n}명 (${d.rate}%)`+
+    (d.first?`\n첫 도착 ${d.first} · 마지막 도착 ${d.last}`:'')+(d.start!=null&&d.ar.length?`\n${S.time} 기준 정시 ${d.ontime}명 · 이후 ${d.ar.length-d.ontime}명`:'')+
+    `\n\n■ 도착 순서\n${d.ar.map((m,i)=>`${i+1}. ${m.time} ${m.pos?m.pos+' ':''}${m.name}`).join('\n')||'- 없음'}`+
+    `\n\n■ 미도착(${d.outs.length})\n${d.outs.map(m=>`- ${m.pos?m.pos+' ':''}${m.name}`).join('\n')||'- 없음'}`;
+}
+async function makeReportImage(){
+  const d=reportData(),W=1080,P0=48,RH=58;
+  const outRows=Math.ceil(d.outs.length/3);
+  const H=330+(d.ar.length?d.ar.length*RH+90:90)+(d.outs.length?outRows*54+90:0)+80;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.textBaseline='middle';
+  x.fillStyle='#f2f2f7';x.fillRect(0,0,W,H);
+  x.fillStyle='#fff';x.fillRect(0,0,W,300);x.fillStyle='rgba(60,60,67,.13)';x.fillRect(0,299,W,1);
+  x.fillStyle='#0a64d8';x.font=`700 26px ${FF}`;x.textAlign='left';x.fillText('행사 결과 보고',P0,52);
+  x.fillStyle='#1c1c1e';fit(x,evName(),P0,104,W-P0*2,50,'700');
+  x.fillStyle='#6e6e73';fit(x,[evLine(),hm()+' 기준'].filter(Boolean).join('  ·  '),P0,156,W-P0*2,28,'500');
+  const k=[['도착',`${d.ar.length}/${d.n}`],['도착률',d.rate+'%'],['첫 도착',d.first||'—'],['마지막',d.last||'—']],kw=(W-P0*2-36)/4;
+  k.forEach(([l,v],i)=>{const X=P0+i*(kw+12);x.fillStyle=i===1?'#14a05c':'#f2f2f7';rr(x,X,192,kw,88,18);x.fill();
+    x.fillStyle=i===1?'#fff':'#1c1c1e';x.textAlign='center';x.font=`700 36px ${FF}`;x.fillText(v,X+kw/2,226);
+    x.fillStyle=i===1?'rgba(255,255,255,.85)':'#6e6e73';x.font=`500 20px ${FF}`;x.fillText(l,X+kw/2,262)});
+  let Y=330;
+  x.textAlign='left';x.fillStyle='#6e6e73';x.font=`600 24px ${FF}`;x.fillText(`도착 순서 (${d.ar.length}명)`,P0,Y);Y+=30;
+  if(d.ar.length){x.fillStyle='#fff';rr(x,P0,Y,W-P0*2,d.ar.length*RH+16,20);x.fill();Y+=8;
+    d.ar.forEach((m,i)=>{const cy=Y+RH/2;
+      if(i){x.fillStyle='rgba(60,60,67,.12)';x.fillRect(P0+70,Y,W-P0*2-90,1)}
+      x.fillStyle='#14a05c';x.beginPath();x.arc(P0+38,cy,17,0,Math.PI*2);x.fill();x.fillStyle='#fff';x.font=`700 18px ${FF}`;x.textAlign='center';x.fillText(String(i+1),P0+38,cy+1);
+      x.textAlign='left';x.fillStyle='#1c1c1e';x.font=`700 26px ${FF}`;x.fillText(m.time||'',P0+76,cy);
+      fit(x,m.name||'',P0+180,cy,260,28,'700');x.fillStyle='#6e6e73';fit(x,[m.pos,seatOf(m.id)].filter(Boolean).join(' · '),P0+450,cy,W-P0*2-560,22,'500');
+      x.textAlign='right';x.fillStyle='#aeaeb2';fit(x,m.by||'',W-P0-20,cy,120,20,'500','right');x.textAlign='left';Y+=RH});Y+=8}
+  else{x.fillStyle='#aeaeb2';x.font=`500 24px ${FF}`;x.fillText('아직 도착한 인물이 없습니다',P0,Y+24)}
+  Y+=50;
+  if(d.outs.length){x.fillStyle='#6e6e73';x.font=`600 24px ${FF}`;x.textAlign='left';x.fillText(`미도착 (${d.outs.length}명)`,P0,Y);Y+=30;
+    const cw=(W-P0*2-24)/3;d.outs.forEach((m,i)=>{const X=P0+(i%3)*(cw+12),YY=Y+Math.floor(i/3)*54;x.fillStyle='#fff';rr(x,X,YY,cw,44,12);x.fill();
+      x.fillStyle='#1c1c1e';fit(x,`${m.pos?m.pos+' ':''}${m.name}`,X+cw/2,YY+22,cw-20,22,'600','center')});}
+  x.fillStyle='#9ca3af';x.font=`400 20px ${FF}`;x.textAlign='center';x.fillText('의전 체크 보드',W/2,H-34);
+  return new Promise(r=>c.toBlob(r,'image/jpeg',0.92));
+}
+let rpBlob=null;const rpName=()=>`행사결과_${(S.title||'').replace(/[\\/:*?"<>|\s]+/g,'_')}_${hm().replace(':','')}.jpg`;
+$('mReportB').onclick=()=>{close('mMenu');openReport()};
+$('rpClose').onclick=()=>close('mReport');
+$('rpText').onclick=()=>copyTxt(reportText(),'결과 보고 텍스트를 복사했습니다');
+$('rpImg').onclick=async()=>{try{rpBlob=await makeReportImage();const p=$('rpPrev');if(p.src)URL.revokeObjectURL(p.src);p.src=URL.createObjectURL(rpBlob);$('rpOut').hidden=false;
+  setTimeout(()=>$('rpOut').scrollIntoView({behavior:'smooth',block:'nearest'}),60)}catch(_){toast('이미지 생성 실패')}};
+$('rpShare').onclick=()=>rpBlob&&shareBlob(rpBlob,rpName());
+$('rpSave').onclick=()=>rpBlob&&saveBlob(rpBlob,rpName());
+
+/* ---------- 새 행사 시작 ---------- */
+$('mNewEvB').onclick=async()=>{close('mMenu');if(!(await ensurePin()))return;
+  $('nTitle').value='';$('nDate').value=today();$('nTime').value='';$('nPlace').value=S.place||'';
+  document.querySelectorAll('#mNewEv [data-srv]').forEach(e=>e.style.display=server()?'':'none');
+  $('nSeat').closest('.sw').style.display=S.seat&&S.seat.r?'':'none';
+  open('mNewEv');setTimeout(()=>$('nTitle').focus(),300)};
+$('nCancel').onclick=()=>close('mNewEv');
+$('nGo').onclick=async()=>{
+  const t=$('nTitle').value.trim();if(!t){toast('새 행사명을 입력하세요');$('nTitle').focus();return}
+  const tm=normT($('nTime').value);
+  if(!confirm(`'${t}' 행사로 새로 시작할까요?\n선택한 지난 기록은 되돌릴 수 없습니다.`))return;
+  close('mNewEv');$('nGo').disabled=true;
+  try{
+    S.title=t;S.date=$('nDate').value;S.time=tm;S.place=$('nPlace').value.trim();await opMeta();
+    if($('nChk').checked){OUT=[];ls.set('pcb.out',OUT);opReset()}
+    if(server()&&$('nChat').checked)await write({a:'chatclear'});
+    if(server()&&$('nLog').checked)await write({a:'logclear'});
+    if($('nPlan').checked){const p=planOf();S.plan={memo:'',sched:[],imgv:(p.imgv||0)+1,hasImg:false};planImg={v:S.plan.imgv,d:''};saveLocal();
+      if(server())await write({a:'plan',memo:'',sched:[],img:''})}
+    if($('nSeat').checked&&S.seat){const s=cloneSeat();s.a={};await opSeat(s)}
+    render();toast(`'${t}' 행사를 시작합니다`);
+  }finally{$('nGo').disabled=false}
+};
+
+/* ---------- 처음 사용 안내 ---------- */
+function openOnb(){$('onbNameW').style.display=server()?'':'none';$('onbName').value=P.name||'';open('mOnb')}
+$('onbGo').onclick=()=>{
+  if(server()){const n=$('onbName').value.trim();if(!n){toast('이름을 입력하세요');$('onbName').focus();return}P.name=n}
+  P.onb=1;savePrefs();close('mOnb');watch(true);setTimeout(askLoc,500);if(!server()&&!S.title)setTimeout(openInfo,400)};
+$('mHelpB').onclick=()=>{close('mMenu');openOnb()};
+
+/* ---------- 내 공유 서버 만들기 · 초대 ---------- */
+const RAW_CODE='https://raw.githubusercontent.com/leedongsoo3631/protocol-check/main/server/Code.gs';
+const APP_PAGE='https://github.com/leedongsoo3631/protocol-check/releases/latest';
+async function serverCode(){
+  for(const u of ['Code.gs',RAW_CODE]){try{const r=await fetch(u,{cache:'no-store'});if(r.ok){const t=await r.text();if(t.includes('function api('))return t}}catch(_){}}
+  return '';
+}
+function openGuide(){$('gdUrl').value=(!GAS&&!BAKED&&P.api!==DEFAULT_API)?P.api:'';$('gdMsg').textContent='';open('mGuide')}
+$('mGuideB').onclick=()=>{close('mMenu');openGuide()};
+$('sGuide').onclick=()=>{close('mSetS');openGuide()};
+$('gdClose').onclick=()=>close('mGuide');
+$('gdOpen').onclick=()=>{const u='https://script.google.com/create';if(AB&&AB.openUrl)AB.openUrl(u);else window.open(u,'_blank')};
+$('gdCode').onclick=async()=>{$('gdCode').textContent='불러오는 중…';const t=await serverCode();$('gdCode').textContent='서버 코드 복사';
+  if(!t){toast('코드를 불러오지 못했습니다. 인터넷 연결을 확인하세요');return}
+  copyTxt(t,`서버 코드를 복사했습니다 (${t.split('\n').length}줄)`)};
+const pickApi=s=>{const m=String(s||'').match(/https:\/\/script\.google(?:usercontent)?\.com\/[^\s"'<>]+/);return m?m[0].replace(/[).,]+$/,''):''};
+async function testApi(u){
+  try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({a:'state'})});
+    const j=await r.json();return j&&j.ok?j:null}catch(_){return null}}
+function useApi(u){P.api=u;P.pin='';online=null;savePrefs();mode='check';initData();render();poll();watch(true)}
+$('gdTest').onclick=async()=>{
+  const u=pickApi($('gdUrl').value);if(!u){$('gdMsg').textContent='https://script.google.com/… 로 시작하는 웹 앱 주소를 붙여넣으세요.';return}
+  $('gdMsg').textContent='연결 확인 중…';const j=await testApi(u);
+  if(!j){$('gdMsg').textContent='연결되지 않습니다. 배포 때 액세스 권한을 "모든 사용자"로 했는지, 주소 끝이 /exec 인지 확인하세요.';return}
+  $('gdMsg').textContent=`연결 성공 · 명단 ${(j.members||[]).length}명`;useApi(u);setTimeout(()=>{close('mGuide');toast('새 공유 서버에 연결했습니다')},700)};
+function inviteText(){
+  const u=BAKED||P.api;
+  return `[의전 체크] ${S.title?`'${S.title}' `:''}담당자 초대\n\n① 앱 설치(안드로이드)\n${APP_PAGE}\n\n② 앱 ☰메뉴 → 설정 → '공유 서버 주소' 칸에 이 문구 전체를 붙여넣고 저장\n\n서버 주소: ${u}\n\n※ 명단 편집 비밀번호는 담당자에게 따로 받으세요.`;
+}
+$('mInviteB').onclick=()=>{close('mMenu');if(!server()){toast('공유 서버에 연결된 뒤 초대할 수 있습니다');return}copyTxt(inviteText(),'초대 문구를 복사했습니다 — 카톡에 붙여넣으세요')};
 window.__pcbBack=()=>{const ms=document.querySelectorAll('.mask.show'),m=ms[ms.length-1];if(m){m.classList.remove('show');if(m.id==='mMap')closeMap();renderChat();return true}
   if(mode==='edit'){mode='check';render();return true}return false};
 if(AB){$('mAppB').style.display='none';document.querySelectorAll('#xOut .hint').forEach(e=>e.textContent='공유를 누르면 카톡을 골라 바로 보낼 수 있습니다.');$('xSave').textContent='갤러리에 저장'}
-initData();render();renderChat();poll();watch();setTimeout(askLoc,1200);
-if(!server()&&!S.title)setTimeout(openInfo,400);
+initData();render();renderChat();poll();watch();
+if(!P.onb)setTimeout(openOnb,350);else{setTimeout(askLoc,1200);if(!server()&&!S.title)setTimeout(openInfo,400)}
 })();
 </script>
 </body>

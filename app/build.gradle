@@ -46,6 +46,7 @@ android {
 // 보드 HTML(web/index.html)을 앱 안에 넣는다 — 보드를 고치면 이 파일만 바꾸면 된다
 tasks.register('copyBoard', Copy) {
     from rootProject.file('web/index.html')
+    from rootProject.file('server/Code.gs')   // '내 공유 서버 만들기'에서 복사해 주는 서버 코드
     into 'src/main/assets'
 }
 preBuild.dependsOn 'copyBoard'

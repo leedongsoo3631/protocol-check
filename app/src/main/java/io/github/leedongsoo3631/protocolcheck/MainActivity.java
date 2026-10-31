@@ -361,6 +361,17 @@ public class MainActivity extends ComponentActivity {
         }
 
         @JavascriptInterface
+        public void openUrl(String url) {
+            runOnUiThread(() -> {
+                try {
+                    Uri u = Uri.parse(url);
+                    if ("https".equals(u.getScheme())) startActivity(new Intent(Intent.ACTION_VIEW, u));
+                } catch (Exception ignored) {
+                }
+            });
+        }
+
+        @JavascriptInterface
         public String version() {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;

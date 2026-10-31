@@ -146,9 +146,9 @@ function api(q) {
       return { ok: false, error: '알 수 없는 요청' };
     }
 
+    SpreadsheetApp.flush();
     const p = PropertiesService.getScriptProperties();
     p.setProperty('ver', String((Number(p.getProperty('ver')) || 1) + 1));
-    SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
@@ -204,10 +204,16 @@ function state_(ver) {
   const p = PropertiesService.getScriptProperties();
   const cur = p.getProperty('ver') || '1';
   if (ver && String(ver) === cur) return { ok: true, same: true, ver: cur };
+  // 같은 버전은 여러 사람이 동시에 받아 가므로 5분간 캐시해 시트를 다시 읽지 않는다
+  const cache = CacheService.getScriptCache(), key = 'st' + cur;
+  const hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
     id: o.id, pos: o.pos, name: o.name, note: o.note, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
-  return { ok: true, ver: cur, chat: chat_(), plan: plan_(), seat: seat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
+  const s = { ok: true, ver: cur, chat: chat_(), plan: plan_(), seat: seat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
+  try { const js = JSON.stringify(s); if (js.length < 95000) cache.put(key, js, 300); } catch (e) {}
+  return s;
 }
 
 function photos_(ids) {

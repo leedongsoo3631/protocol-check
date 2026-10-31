@@ -152,6 +152,7 @@ public class WatchService extends Service {
         Map<String, Boolean> checked = new HashMap<>();
         long lastSeq = 0;
         String lastPlan = null;
+        String lastSeat = null;
         int fails = 0;
         while (running) {
             try {
@@ -211,6 +212,12 @@ public class WatchService extends Service {
                         ev.add(new String[]{"📋 일정·메모 변경", "행사 일정이나 메모가 수정되었습니다", "plan"});
                     }
                     lastPlan = ps;
+                    Object so = r.opt("seat");
+                    String ss = so == null ? "" : so.toString();
+                    if (!first && lastSeat != null && !ss.equals(lastSeat)) {
+                        ev.add(new String[]{"💺 좌석배치 변경", "좌석배치도가 수정되었습니다", "plan"});
+                    }
+                    lastSeat = ss;
                     checked = now;
                     lastSeq = maxSeq;
                     first = false;

@@ -8,6 +8,7 @@ const LOGSHEET = '체크기록';
 const CHATSHEET = '채팅';
 const LOCSHEET = '위치';
 const PLANSHEET = '일정';
+const SEATSHEET = '좌석';
 const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo', 'note'];
 const NOTECOL = 10;
 
@@ -45,7 +46,7 @@ function api(q) {
   if (q.a === 'loc') return loc_(q);
   if (q.a === 'pin') return String(q.pin) === String(EDIT_PIN) ? { ok: true } : { ok: false, error: 'pin' };
 
-  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey', 'logclear', 'plan'];
+  const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey', 'logclear', 'plan', 'seat'];
   if (editOps.indexOf(q.a) >= 0 && String(q.pin) !== String(EDIT_PIN)) return { ok: false, error: 'pin' };
 
   const lock = LockService.getScriptLock();
@@ -130,6 +131,11 @@ function api(q) {
         ps.getRange('B4').setValue(String((Number(ps.getRange('B4').getDisplayValue()) || 0) + 1));
       }
 
+    } else if (q.a === 'seat') {
+      const js = q.seat ? JSON.stringify(q.seat) : '';
+      if (js.length > 45000) return { ok: false, error: '좌석 정보가 너무 큽니다' };
+      seatSheet_().getRange('B1').setValue(js);
+
     } else if (q.a === 'vwkey') {
       PropertiesService.getScriptProperties().setProperty('vwKey', String(q.key || '').trim());
 
@@ -164,7 +170,7 @@ function ss_() {
 /* 처음 한 번 실행: 권한 승인 + 저장용 시트 만들기 (편집기에서 ▶실행) */
 function setup() {
   const s = ss_();
-  sheet_(); logSheet_(); chatSheet_(); locSheet_(); planSheet_();
+  sheet_(); logSheet_(); chatSheet_(); locSheet_(); planSheet_(); seatSheet_();
   Logger.log('준비 완료. 저장용 시트: ' + s.getUrl());
 }
 
@@ -201,7 +207,7 @@ function state_(ver) {
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
     id: o.id, pos: o.pos, name: o.name, note: o.note, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
-  return { ok: true, ver: cur, chat: chat_(), plan: plan_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
+  return { ok: true, ver: cur, chat: chat_(), plan: plan_(), seat: seat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
 }
 
 function photos_(ids) {
@@ -332,4 +338,22 @@ function plan_() {
   let sched = [];
   try { sched = JSON.parse(v[1][0] || '[]'); } catch (e) {}
   return { memo: v[0][0] || '', sched: sched, imgv: Number(v[3][0]) || 0, hasImg: !!v[2][0] };
+}
+
+/* ---------- 좌석배치 (좌석 시트 B1 JSON) ---------- */
+function seatSheet_() {
+  const ss = ss_();
+  let sh = ss.getSheetByName(SEATSHEET);
+  if (!sh) {
+    sh = ss.insertSheet(SEATSHEET);
+    sh.getRange('A:B').setNumberFormat('@');
+    sh.getRange(1, 1, 1, 2).setValues([['배치(JSON)', '']]);
+  }
+  return sh;
+}
+
+function seat_() {
+  const v = seatSheet_().getRange('B1').getDisplayValue();
+  if (!v) return null;
+  try { return JSON.parse(v); } catch (e) { return null; }
 }

@@ -79,6 +79,14 @@ body.edit .editnote{display:block}
 .nm{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
 .tm{font-size:11px;font-weight:600;min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .card.ck .tm{color:var(--ok)}
+.ex{font-size:11px;color:var(--sub);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#grid.c4 .ex{font-size:10px}
+.xl{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.xl div{display:flex;gap:6px;align-items:center}
+.xl input{flex:1;min-width:0;border:0;background:var(--surface);color:var(--ink);border-radius:12px;padding:11px 14px;font-size:16px;font-family:inherit;box-shadow:inset 0 0 0 .5px var(--line)}
+.xl input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.xl button{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--warn);font-size:20px;line-height:1;font-family:inherit}
+.xadd{border:1.5px dashed var(--faint);background:transparent;color:var(--accent);border-radius:12px;padding:10px;width:100%;font-size:15px;font-weight:600;font-family:inherit}
 .card:not(.ck) .tm{color:var(--faint);font-weight:500}
 .card.ck{outline-color:var(--ok)}
 .card.wait{opacity:.7}
@@ -285,6 +293,7 @@ nav .dot.on{display:flex}
   <div class="paste" id="ePaste" contenteditable="true" inputmode="none" aria-label="사진 붙여넣기">사진 선택이 안 되면: 갤러리에서 사진을 <b>복사</b>한 뒤 여기를 길게 눌러 <b>붙여넣기</b></div>
   <div class="fld"><label>직위</label><input id="ePos" placeholder="예: 의장, 구의원, 국회의원"></div>
   <div class="fld"><label>이름</label><input id="eName" placeholder="예: 홍길동"></div>
+  <div class="fld"><label>추가 줄 (카드에 이름 아래로 표시)</label><div class="xl" id="eXl"></div><button type="button" class="xadd" id="eXadd">＋ 줄 추가</button></div>
   <div class="row" id="eMove"><button class="btn" id="eUp">◀ 앞으로</button><button class="btn" id="eDn">뒤로 ▶</button></div>
   <div class="row mt"><button class="btn del" id="eDel">삭제</button><button class="btn" id="eCancel">취소</button><button class="btn pri" id="eSave">저장</button></div>
 </div></div>
@@ -399,7 +408,7 @@ nav .dot.on{display:flex}
 <!-- 일괄 입력 -->
 <div class="mask" id="mBulkS"><div class="sheet">
   <h3>명단 한꺼번에 입력</h3>
-  <p class="hint">한 줄에 한 명, <b>직위 이름</b> 순서로 입력하세요. 쉼표나 탭으로 구분해도 됩니다. 엑셀에서 두 칸(직위, 이름)을 복사해 붙여넣어도 됩니다.</p>
+  <p class="hint">한 줄에 한 명, <b>직위 이름</b> 순서로 입력하세요. 엑셀에서 칸을 복사해 붙여넣으면 <b>직위, 이름, 추가 줄1, 추가 줄2…</b> 순서로 들어갑니다. 쉼표로 구분해도 됩니다.</p>
   <div class="fld"><textarea id="bulkTxt" placeholder="의장 홍길동&#10;부의장 김영희&#10;행정자치위원장 이철수&#10;구의원 박민수"></textarea></div>
   <div class="row"><button class="btn" id="bulkReplace">기존 명단 대체</button><button class="btn pri" id="bulkAdd">뒤에 추가</button></div>
   <button class="btn mt" style="width:100%" id="bulkCancel">취소</button>
@@ -586,7 +595,7 @@ function opMove(id,d){
 function opBulk(list,replace){
   list.forEach(m=>{if(!m.id)m.id=uid()});
   S.members=replace?list.slice():S.members.concat(list);saveLocal();render();
-  if(server())return write({a:'bulk',replace,members:list.map(m=>({id:m.id,pos:m.pos,name:m.name,photo:m.photo||'',checked:!!m.checked,time:m.time||'',by:m.by||''}))},
+  if(server())return write({a:'bulk',replace,members:list.map(m=>({id:m.id,pos:m.pos,name:m.name,note:m.note||'',photo:m.photo||'',checked:!!m.checked,time:m.time||'',by:m.by||''}))},
     r=>{list.forEach(m=>{if(m.photo){const rm=r.members.find(x=>x.id===m.id);if(rm)phPut(rm.id,rm.prev,m.photo)}})});
 }
 function opReset(){S.members.forEach(m=>{m.checked=false;m.time='';m.by=''});saveLocal();render();if(server())write({a:'reset'})}
@@ -606,7 +615,7 @@ function render(){
   let h=list.map(m=>`<div class="card${m.checked?' ck':''}${m.photo===null?' wait':''}" data-id="${esc(m.id)}">
     <div class="ph" style="${m.photo?`background-image:url(${m.photo})`:''}">${m.photo?'':m.photo===null?'…':esc((m.name||'?').slice(0,1))}</div>
     <div class="badge"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="pen">✎ 수정</div>
-    <div class="info"><div class="pos">${esc(m.pos)||'&nbsp;'}</div><div class="nm">${esc(m.name)||'(이름)'}</div>
+    <div class="info"><div class="pos">${esc(m.pos)||'&nbsp;'}</div><div class="nm">${esc(m.name)||'(이름)'}</div>${noteLines(m).map(t=>`<div class="ex">${esc(t)}</div>`).join('')}
     <div class="tm">${m.checked?'도착 '+esc(m.time):'미도착'}</div></div></div>`).join('');
   if(!list.length&&mode!=='edit')h=`<div class="empty">${S.members.length?'해당 인물이 없습니다':'명단이 비어 있습니다.<br>아래 ✏️편집 또는 ☰메뉴 → 명단 한꺼번에 입력으로 추가하세요.'}</div>`;
   h+=`<button class="addcard" id="addCard"><b>＋</b>인물 추가</button>`;
@@ -690,10 +699,14 @@ function fileToPhoto(file){return new Promise((res,rej)=>{
 
 /* ---------- 인물 편집 ---------- */
 function setEPh(){const p=$('ePh');p.style.backgroundImage=editPhoto?`url(${editPhoto})`:'';p.textContent=editPhoto?'':'?'}
+function noteLines(m){return String(m&&m.note||'').split('\n').map(s=>s.trim()).filter(Boolean)}
+function xlAdd(v,focus){const d=document.createElement('div');d.innerHTML='<input maxlength="60" placeholder="예: 3선 · 행정자치위원회"><button type="button" aria-label="줄 삭제">−</button>';
+  d.querySelector('input').value=v||'';d.querySelector('button').onclick=()=>d.remove();$('eXl').appendChild(d);if(focus)d.querySelector('input').focus()}
+$('eXadd').onclick=()=>xlAdd('',true);
 function openEdit(id){
   editId=id;const m=S.members.find(x=>x.id===id);
   $('eTitle').textContent=m?'인물 수정':'인물 추가';
-  $('ePos').value=m?m.pos:'';$('eName').value=m?m.name:'';editPhoto=m&&m.photo?m.photo:'';editPhotoChanged=false;setEPh();
+  $('ePos').value=m?m.pos:'';$('eName').value=m?m.name:'';$('eXl').innerHTML='';noteLines(m).forEach(t=>xlAdd(t));editPhoto=m&&m.photo?m.photo:'';editPhotoChanged=false;setEPh();
   $('eDel').style.display=m?'':'none';$('eMove').style.display=m?'':'none';
   open('mEdit');
 }
@@ -710,7 +723,8 @@ $('eCancel').onclick=()=>close('mEdit');
 $('eSave').onclick=()=>{
   const pos=$('ePos').value.trim(),name=$('eName').value.trim();
   if(!name){toast('이름을 입력하세요');return}
-  const u={pos,name};if(editId)u.id=editId;
+  const note=[...$('eXl').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean).join('\n');
+  const u={pos,name,note};if(editId)u.id=editId;
   if(editPhotoChanged||!editId)u.photo=editPhoto;
   opUpsert(u);close('mEdit');
 };
@@ -723,10 +737,10 @@ $('bMore').onclick=()=>open('mMenu');$('mClose').onclick=()=>close('mMenu');
 $('mBulk').onclick=async()=>{close('mMenu');if(!(await ensurePin()))return;$('bulkTxt').value='';open('mBulkS')};
 $('bulkCancel').onclick=()=>close('mBulkS');
 function parseBulk(){return $('bulkTxt').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
-  let pos,name;
-  if(/[\t,]/.test(l)){const p=l.split(/[\t,]/).map(s=>s.trim()).filter(Boolean);pos=p.length>1?p[0]:'';name=p.length>1?p[1]:p[0]}
+  let pos,name,note='';
+  if(/[\t,]/.test(l)){const p=l.split(/[\t,]/).map(s=>s.trim());while(p.length&&!p[p.length-1])p.pop();pos=p.length>1?p[0]:'';name=p.length>1?p[1]:p[0];note=p.slice(2).filter(Boolean).join('\n')}
   else{const p=l.split(/\s+/);name=p.pop();pos=p.join(' ')}
-  return{id:uid(),pos,name,photo:'',checked:false,time:'',by:'',prev:0}})}
+  return{id:uid(),pos,name,note,photo:'',checked:false,time:'',by:'',prev:0}})}
 $('bulkAdd').onclick=()=>{const a=parseBulk();if(!a.length)return;opBulk(a,false);close('mBulkS');toast(a.length+'명 추가')};
 $('bulkReplace').onclick=()=>{const a=parseBulk();if(!a.length)return;if(!confirm('기존 명단을 지우고 대체할까요?'))return;
   opBulk(a,true);close('mBulkS');toast(a.length+'명 입력')};
@@ -749,7 +763,7 @@ async function download(blob,name){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 $('mBackup').onclick=()=>{
-  const d={title:S.title,date:S.date,time:S.time,place:S.place,members:S.members.map(m=>({id:m.id,pos:m.pos,name:m.name,photo:m.photo||'',checked:m.checked,time:m.time,by:m.by||''}))};
+  const d={title:S.title,date:S.date,time:S.time,place:S.place,members:S.members.map(m=>({id:m.id,pos:m.pos,name:m.name,note:m.note||'',photo:m.photo||'',checked:m.checked,time:m.time,by:m.by||''}))};
   download(new Blob([JSON.stringify(d)],{type:'application/json'}),`의전명단_${S.title||'백업'}_${S.date||today()}.json`);close('mMenu')};
 $('mRestore').onclick=()=>setTimeout(()=>close('mMenu'),300);
 $('fRestore').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!(await ensurePin()))return;const r=new FileReader();
@@ -810,7 +824,8 @@ function fmtDate(s){if(!s)return'';const d=new Date(s+'T00:00');return isNaN(d)?
 async function makeImage(){
   const list=filtered(xWho),cols=xCols;
   const W=1080,P0=36,G=16,HH=250;
-  const cw=(W-P0*2-G*(cols-1))/cols,ph=cw*1.25,th=cw*0.5,ch=ph+th;
+  const xn=Math.min(3,Math.max(0,...list.map(m=>noteLines(m).length)));
+  const cw=(W-P0*2-G*(cols-1))/cols,ph=cw*1.25,lh=cw*0.115,th=cw*0.5+xn*lh,ch=ph+th;
   const rows=Math.max(1,Math.ceil(list.length/cols));
   const H=HH+rows*ch+(rows-1)*G+P0+56;
   const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
@@ -842,9 +857,11 @@ async function makeImage(){
       x.strokeStyle='#fff';x.lineWidth=R*0.28;x.lineCap='round';x.lineJoin='round';x.beginPath();
       x.moveTo(cx-R*.45,cy+R*.02);x.lineTo(cx-R*.1,cy+R*.38);x.lineTo(cx+R*.5,cy-R*.35);x.stroke()}
     const ty=Y+ph;
-    x.fillStyle='#6e6e73';fit(x,m.pos||'',X+tx,ty+th*0.2,cw-16,cw*0.105,'500','center');
-    x.fillStyle='#1c1c1e';fit(x,m.name||'',X+tx,ty+th*0.5,cw-16,cw*0.15,'700','center');
-    x.fillStyle=m.checked?'#14a05c':'#aeaeb2';fit(x,m.checked?`도착 ${m.time}`:'미도착',X+tx,ty+th*0.8,cw-16,cw*0.095,m.checked?'700':'500','center');
+    const b0=cw*0.5;
+    x.fillStyle='#6e6e73';fit(x,m.pos||'',X+tx,ty+b0*0.2,cw-16,cw*0.105,'500','center');
+    x.fillStyle='#1c1c1e';fit(x,m.name||'',X+tx,ty+b0*0.5,cw-16,cw*0.15,'700','center');
+    noteLines(m).slice(0,xn).forEach((t,k)=>{x.fillStyle='#6e6e73';fit(x,t,X+tx,ty+b0*0.5+cw*0.1+k*lh+lh*0.35,cw-16,cw*0.09,'500','center')});
+    x.fillStyle=m.checked?'#14a05c':'#aeaeb2';fit(x,m.checked?`도착 ${m.time}`:'미도착',X+tx,ty+th-b0*0.2,cw-16,cw*0.095,m.checked?'700':'500','center');
   });
   if(!list.length){x.fillStyle='#6b7280';x.font=`500 32px ${FF}`;x.textAlign='center';x.fillText('해당 인물이 없습니다',W/2,HH+ch/2)}
   x.fillStyle='#9ca3af';x.font=`400 22px ${FF}`;x.textAlign='center';
@@ -872,7 +889,7 @@ $('xSave').onclick=async()=>{if(!lastBlob)return;
   download(lastBlob,fname())};
 $('xText').onclick=async()=>{
   const ins=S.members.filter(m=>m.checked),outs=S.members.filter(m=>!m.checked);
-  const nm=m=>`${m.pos?m.pos+' ':''}${m.name}`;
+  const nm=m=>`${m.pos?m.pos+' ':''}${m.name}`+(noteLines(m).length?` [${noteLines(m).join(' / ')}]`:'');
   const t=`[${evName()}]\n${[evLine(),hm()+' 현재'].filter(Boolean).join(' · ')}\n도착 ${ins.length}명 / 전체 ${S.members.length}명\n\n■ 도착(${ins.length})\n${ins.map(m=>`- ${nm(m)} (${m.time})`).join('\n')||'- 없음'}\n\n■ 미도착(${outs.length})\n${outs.map(m=>`- ${nm(m)}`).join('\n')||'- 없음'}`;
   if(AB&&AB.copyText(t)){toast('명단 텍스트 복사됨 — 카톡에 붙여넣기');return}
   try{await navigator.clipboard.writeText(t);toast('명단 텍스트 복사됨 — 카톡에 붙여넣기')}

@@ -7,7 +7,8 @@ const SHEET = '명단';
 const LOGSHEET = '체크기록';
 const CHATSHEET = '채팅';
 const LOCSHEET = '위치';
-const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo'];
+const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo', 'note'];
+const NOTECOL = 10;
 
 /* 보드 화면 제공 */
 function doGet(e) {
@@ -64,11 +65,12 @@ function api(q) {
       if (m) {
         if (u.pos !== undefined) sh.getRange(m.r, 3).setValue(String(u.pos));
         if (u.name !== undefined) sh.getRange(m.r, 4).setValue(String(u.name));
+        if (u.note !== undefined) sh.getRange(m.r, NOTECOL).setValue(String(u.note || ''));
         if (u.photo !== undefined) sh.getRange(m.r, 8, 1, 2).setValues([[String(m.prev + 1), String(u.photo || '')]]);
       } else {
         const ord = data.reduce((a, o) => Math.max(a, o.ord), 0) + 1;
         sh.appendRow([String(u.id || Utilities.getUuid()), String(ord), String(u.pos || ''), String(u.name || ''),
-          '', '', '', u.photo ? '1' : '0', String(u.photo || '')]);
+          '', '', '', u.photo ? '1' : '0', String(u.photo || ''), String(u.note || '')]);
       }
 
     } else if (q.a === 'remove') {
@@ -86,7 +88,7 @@ function api(q) {
       else base = data.reduce((a, o) => Math.max(a, o.ord), 0);
       const list = (q.members || []).map((u, i) => [String(u.id || Utilities.getUuid()), String(base + i + 1),
         String(u.pos || ''), String(u.name || ''), u.checked ? 'Y' : '', u.checked ? String(u.time || '') : '',
-        u.checked ? String(u.by || '') : '', u.photo ? '1' : '0', String(u.photo || '')]);
+        u.checked ? String(u.by || '') : '', u.photo ? '1' : '0', String(u.photo || ''), String(u.note || '')]);
       if (list.length) sh.getRange(sh.getLastRow() + 1, 1, list.length, HEAD.length).setValues(list);
 
     } else if (q.a === 'reset') {
@@ -161,15 +163,20 @@ function sheet_() {
     sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);
     sh.setFrozenRows(1);
   }
+  if (sh.getRange(1, NOTECOL).getDisplayValue() !== 'note') {
+    sh.getRange('J:J').setNumberFormat('@');
+    sh.getRange(1, NOTECOL).setValue('note');
+  }
   return sh;
 }
 
 function rows_(sh) {
   const n = sh.getLastRow() - 1;
   if (n < 1) return [];
+  const notes = sh.getRange(2, NOTECOL, n, 1).getDisplayValues();
   return sh.getRange(2, 1, n, 8).getDisplayValues().map((x, i) => ({
     r: i + 2, id: x[0], ord: Number(x[1]) || 0, pos: x[2], name: x[3],
-    checked: x[4] === 'Y', time: x[5], by: x[6], prev: Number(x[7]) || 0
+    checked: x[4] === 'Y', time: x[5], by: x[6], prev: Number(x[7]) || 0, note: notes[i][0] || ''
   })).filter(o => o.id);
 }
 
@@ -178,7 +185,7 @@ function state_(ver) {
   const cur = p.getProperty('ver') || '1';
   if (ver && String(ver) === cur) return { ok: true, same: true, ver: cur };
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
-    id: o.id, pos: o.pos, name: o.name, checked: o.checked, time: o.time, by: o.by, prev: o.prev
+    id: o.id, pos: o.pos, name: o.name, note: o.note, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
   return { ok: true, ver: cur, chat: chat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
 }

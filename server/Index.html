@@ -801,7 +801,7 @@ ol.gd code{font-size:12px;background:var(--fill);border-radius:5px;padding:1px 5
 <div class="mask" id="mAlbum"><div class="sheet">
   <div class="alHead"><h3>현장 사진첩 <small id="alCount"></small></h3><button class="btn" id="alClose">닫기</button></div>
   <div class="alAct">
-    <button class="btn pri" id="alCam"><svg viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>촬영</button>
+    <button class="btn pri" id="alCam"><svg viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>카메라</button>
     <div class="pick btn" id="alAddW"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-5-8 8"/></svg>사진 추가<input type="file" id="fAlbum" accept="image/*" multiple></div>
     <button class="btn" id="alSave"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19h14"/></svg>저장</button>
   </div>
@@ -2202,7 +2202,17 @@ $('camLast').onclick=()=>{closeCam();openAlbum()};
 $('fCam').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
   try{const im=await new Promise((res,rej)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=rej;i.src=u});
     await albAdd(canvasJpeg(im,IMG_MAX,IMG_LEN),thumbOf(im));toast('사진첩에 넣었습니다');if(!$('mAlbum').classList.contains('show'))openAlbum()}catch(_){toast('사진을 읽지 못했습니다')}};
-$('alCam').onclick=openCam;
+// 앱: 휴대폰 기본 카메라 앱을 모든 기능 그대로 열고, 돌아오면 그동안 찍은 사진을 자동으로 넣는다
+let camChain=Promise.resolve(),camCount=0;
+window.__camImport=(b64,t)=>{camChain=camChain.then(()=>new Promise(res=>{const i=new Image();
+  i.onload=async()=>{try{await albAdd(canvasJpeg(i,IMG_MAX,IMG_LEN),thumbOf(i),t||Date.now());camCount++}catch(_){}res()};i.onerror=()=>res();i.src='data:image/jpeg;base64,'+b64}))};
+window.__camDone=n=>{camChain.then(()=>{const k=camCount;camCount=0;
+  if(k){toast(`${k}장을 사진첩에 넣었습니다`);if(!$('mAlbum').classList.contains('show'))openAlbum();else renderAlbum()}
+  else if(n===0)toast('새로 찍은 사진이 없습니다')})};
+window.__camPickHint=()=>toast('방금 찍은 사진을 골라 주세요 — 사진 접근을 허용하면 다음부터 자동으로 들어갑니다');
+$('alCam').onclick=()=>{if(server()&&!ensureName())return;
+  if(AB&&AB.openCamera){toast('카메라를 엽니다 — 다 찍고 뒤로 돌아오면 사진첩에 들어갑니다');AB.openCamera()}else openCam()};
+if(AB&&AB.pickPhotos){$('fAlbum').style.pointerEvents='none';$('alAddW').onclick=e=>{e.preventDefault();if(server()&&!ensureName())return;AB.pickPhotos()}}
 
 /* ---------- 사진첩 저장: PDF · ZIP ---------- */
 let axKind='pdf2',axBlob=null,axName='';

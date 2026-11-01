@@ -22,6 +22,15 @@ import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import androidx.activity.result.PickVisualMediaRequest;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import android.provider.MediaStore.Downloads;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -74,6 +83,11 @@ public class MainActivity extends ComponentActivity {
     private ActivityResultLauncher<Uri> takePic;
     private Uri camUri;
     private final Map<String, File> parts = new HashMap<>();
+    // 휴대폰 기본 카메라(모든 기능)로 찍고 돌아오면 그동안 찍은 사진을 사진첩에 넣는다
+    private long camSince = 0;
+    private boolean camSession = false;
+    private ActivityResultLauncher<String> mediaPerm;
+    private ActivityResultLauncher<PickVisualMediaRequest> pickMany;
     private String geoOrigin;
 
     @Override
@@ -126,6 +140,10 @@ public class MainActivity extends ComponentActivity {
             if (fileCallback == null) return;
             fileCallback.onReceiveValue(ok && camUri != null ? new Uri[]{camUri} : null);
             fileCallback = null;
+        });
+        mediaPerm = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> openSystemCamera());
+        pickMany = registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(30), uris -> {
+            if (uris != null && !uris.isEmpty()) importUris(new ArrayList<>(uris), false);
         });
         camPerm = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
             if (camReq != null) {
@@ -259,6 +277,115 @@ public class MainActivity extends ComponentActivity {
     protected void onResume() {
         super.onResume();
         WatchService.appVisible = true;
+        if (camSession) {
+            camSession = false;
+            collectNewShots();
+        }
+    }
+
+    private static String mediaPermission() {
+        return Build.VERSION.SDK_INT >= 33 ? Manifest.permission.READ_MEDIA_IMAGES : Manifest.permission.READ_EXTERNAL_STORAGE;
+    }
+
+    private void openSystemCamera() {
+        camSince = System.currentTimeMillis() / 1000 - 3;
+        Intent i = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+        try {
+            camSession = true;
+            startActivity(i);
+        } catch (Exception e) {
+            camSession = false;
+            Toast.makeText(this, "카메라 앱을 열 수 없습니다", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** 카메라에서 돌아왔을 때: 그 사이 새로 저장된 사진(스크린샷 제외)을 찾는다 */
+    private void collectNewShots() {
+        if (checkSelfPermission(mediaPermission()) != PackageManager.PERMISSION_GRANTED) {
+            web.evaluateJavascript("window.__camPickHint&&window.__camPickHint()", null);
+            pickMany.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
+            return;
+        }
+        new Thread(() -> {
+            List<Uri> found = new ArrayList<>();
+            String[] cols = {MediaStore.Images.Media._ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME};
+            try (Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cols,
+                    MediaStore.Images.Media.DATE_ADDED + ">=?", new String[]{Long.toString(camSince)},
+                    MediaStore.Images.Media.DATE_ADDED + " ASC")) {
+                if (c != null) while (c.moveToNext()) {
+                    String b = c.getString(1);
+                    if (b != null && b.toLowerCase().contains("screenshot")) continue;
+                    found.add(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Long.toString(c.getLong(0))));
+                }
+            } catch (Exception ignored) {
+            }
+            runOnUiThread(() -> {
+                if (found.isEmpty()) web.evaluateJavascript("window.__camDone&&window.__camDone(0)", null);
+                else importUris(found, true);
+            });
+        }).start();
+    }
+
+    /** 사진을 1600px JPEG 로 줄여(회전 반영) 보드 사진첩에 한 장씩 넘긴다 */
+    private void importUris(List<Uri> uris, boolean fromCamera) {
+        new Thread(() -> {
+            int n = 0;
+            for (Uri u : uris) {
+                try {
+                    String b64 = shrink(u);
+                    if (b64 == null) continue;
+                    long t = takenAt(u);
+                    String js = "window.__camImport&&window.__camImport('" + b64 + "'," + t + ")";
+                    runOnUiThread(() -> web.evaluateJavascript(js, null));
+                    n++;
+                } catch (Throwable ignored) {
+                }
+            }
+            int total = n;
+            runOnUiThread(() -> web.evaluateJavascript("window.__camDone&&window.__camDone(" + total + ")", null));
+        }).start();
+    }
+
+    private long takenAt(Uri u) {
+        try (Cursor c = getContentResolver().query(u, new String[]{MediaStore.Images.Media.DATE_TAKEN, MediaStore.Images.Media.DATE_ADDED}, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                long t = c.getLong(0);
+                if (t > 0) return t;
+                return c.getLong(1) * 1000;
+            }
+        } catch (Exception ignored) {
+        }
+        return System.currentTimeMillis();
+    }
+
+    private String shrink(Uri u) throws Exception {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        try (InputStream in = getContentResolver().openInputStream(u)) { BitmapFactory.decodeStream(in, null, o); }
+        int max = Math.max(o.outWidth, o.outHeight), s = 1;
+        while (max / (s * 2) >= 1600) s *= 2;
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = s;
+        Bitmap bm;
+        try (InputStream in = getContentResolver().openInputStream(u)) { bm = BitmapFactory.decodeStream(in, null, o2); }
+        if (bm == null) return null;
+        int rot = 0;
+        try (InputStream in = getContentResolver().openInputStream(u)) {
+            int ori = new ExifInterface(in).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            rot = ori == ExifInterface.ORIENTATION_ROTATE_90 ? 90 : ori == ExifInterface.ORIENTATION_ROTATE_180 ? 180 : ori == ExifInterface.ORIENTATION_ROTATE_270 ? 270 : 0;
+        } catch (Exception ignored) {
+        }
+        float r = Math.min(1f, 1600f / Math.max(bm.getWidth(), bm.getHeight()));
+        Matrix m = new Matrix();
+        m.postScale(r, r);
+        if (rot != 0) m.postRotate(rot);
+        Bitmap out = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m, true);
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        out.compress(Bitmap.CompressFormat.JPEG, 84, bo);
+        if (out != bm) out.recycle();
+        bm.recycle();
+        return Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP);
     }
 
     @Override
@@ -501,6 +628,21 @@ public class MainActivity extends ComponentActivity {
                 return true;
             }
             return saveToDownloads(f, f.getName(), m);
+        }
+
+        /** 휴대폰 기본 카메라 앱을 모든 기능 그대로 연다 */
+        @JavascriptInterface
+        public void openCamera() {
+            runOnUiThread(() -> {
+                if (checkSelfPermission(mediaPermission()) == PackageManager.PERMISSION_GRANTED) openSystemCamera();
+                else mediaPerm.launch(mediaPermission());
+            });
+        }
+
+        @JavascriptInterface
+        public void pickPhotos() {
+            runOnUiThread(() -> pickMany.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build()));
         }
 
         @JavascriptInterface

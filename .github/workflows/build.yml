@@ -73,6 +73,8 @@ jobs:
           else
             cp app/build/outputs/apk/debug/app-debug.apk "out/uijeon-check_test_v1.0.${VERSION_CODE}.apk"
           fi
+          # 카톡 안내 카드의 고정 주소(releases/latest/download/uijeon-check.apk)용 — 항상 최신 앱
+          cp "$(ls out/*.apk | head -1)" out/uijeon-check.apk
           ls -la out
 
       - name: 결과 파일 보관 (Actions)

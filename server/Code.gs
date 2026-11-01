@@ -9,6 +9,8 @@ const CHATSHEET = '채팅';
 const LOCSHEET = '위치';
 const PLANSHEET = '일정';
 const SEATSHEET = '좌석';
+const ALBUMSHEET = '사진첩';
+const ALB_CHUNKS = 10, ALB_CELL = 49000;   // 사진 1장 최대 49만 자(약 360KB)
 const HEAD = ['id', 'ord', 'pos', 'name', 'checked', 'time', 'by', 'prev', 'photo', 'note'];
 const NOTECOL = 10;
 
@@ -44,6 +46,8 @@ function api(q) {
   if (q.a === 'planimg') return { ok: true, img: planSheet_().getRange(3, 2, 1, 10).getDisplayValues()[0].join('') };
   if (q.a === 'locs') return { ok: true, now: Date.now(), locs: locs_() };
   if (q.a === 'loc') return loc_(q);
+  if (q.a === 'albumList') return albumList_();
+  if (q.a === 'albumImg') return albumImg_(q.ids || []);
   if (q.a === 'pin') return String(q.pin) === String(EDIT_PIN) ? { ok: true } : { ok: false, error: 'pin' };
 
   const editOps = ['upsert', 'remove', 'reorder', 'bulk', 'meta', 'reset', 'clear', 'chatclear', 'vwkey', 'logclear', 'plan', 'seat'];
@@ -136,6 +140,38 @@ function api(q) {
       if (js.length > 45000) return { ok: false, error: '좌석 정보가 너무 큽니다' };
       seatSheet_().getRange('B1').setValue(js);
 
+    } else if (q.a === 'albumAdd') {
+      const as = albumSheet_();
+      const id = String(q.id || Utilities.getUuid()).slice(0, 40);
+      const n = as.getLastRow() - 1;
+      const ids = n > 0 ? as.getRange(2, 1, n, 1).getDisplayValues().map(x => x[0]) : [];
+      if (ids.indexOf(id) < 0) {   // 같은 사진을 다시 보내도 한 번만 저장
+        const img = String(q.img || '');
+        if (!/^data:image\/jpeg;base64,/.test(img)) return { ok: false, error: '사진 형식 오류' };
+        if (img.length > ALB_CHUNKS * ALB_CELL) return { ok: false, error: '사진이 너무 큽니다' };
+        const row = [id, String(Number(q.t) || Date.now()), String(q.time || ''), String(q.by || '').slice(0, 30),
+          String(q.cap || '').slice(0, 200), String(q.thumb || '').slice(0, 45000), String(Math.ceil(img.length / ALB_CELL))];
+        for (let k = 0; k < ALB_CHUNKS; k++) row.push(img.slice(k * ALB_CELL, (k + 1) * ALB_CELL));
+        as.getRange(as.getLastRow() + 1, 1, 1, row.length).setValues([row]);
+      }
+
+    } else if (q.a === 'albumCap') {
+      const r = albumRow_(q.id);
+      if (!r) return { ok: false, error: '사진 없음' };
+      albumSheet_().getRange(r, 5).setValue(String(q.cap || '').slice(0, 200));
+
+    } else if (q.a === 'albumDel') {
+      const r = albumRow_(q.id);
+      if (!r) return { ok: false, error: '사진 없음' };
+      const owner = albumSheet_().getRange(r, 4).getDisplayValue();
+      if (String(q.pin) !== String(EDIT_PIN) && (!q.by || String(q.by) !== owner)) return { ok: false, error: 'pin' };
+      albumSheet_().deleteRow(r);
+
+    } else if (q.a === 'albumClear') {
+      if (String(q.pin) !== String(EDIT_PIN)) return { ok: false, error: 'pin' };
+      const as = albumSheet_();
+      if (as.getLastRow() > 1) as.deleteRows(2, as.getLastRow() - 1);
+
     } else if (q.a === 'vwkey') {
       PropertiesService.getScriptProperties().setProperty('vwKey', String(q.key || '').trim());
 
@@ -170,7 +206,7 @@ function ss_() {
 /* 처음 한 번 실행: 권한 승인 + 저장용 시트 만들기 (편집기에서 ▶실행) */
 function setup() {
   const s = ss_();
-  sheet_(); logSheet_(); chatSheet_(); locSheet_(); planSheet_(); seatSheet_();
+  sheet_(); logSheet_(); chatSheet_(); locSheet_(); planSheet_(); seatSheet_(); albumSheet_();
   Logger.log('준비 완료. 저장용 시트: ' + s.getUrl());
 }
 
@@ -211,7 +247,7 @@ function state_(ver) {
   const members = rows_(sheet_()).sort((a, b) => a.ord - b.ord).map(o => ({
     id: o.id, pos: o.pos, name: o.name, note: o.note, checked: o.checked, time: o.time, by: o.by, prev: o.prev
   }));
-  const s = { ok: true, ver: cur, chat: chat_(), plan: plan_(), seat: seat_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
+  const s = { ok: true, ver: cur, chat: chat_(), plan: plan_(), seat: seat_(), album: albumSum_(), meta: { title: p.getProperty('title') || '', date: p.getProperty('date') || '', time: p.getProperty('time') || '', place: p.getProperty('place') || '', vw: p.getProperty('vwKey') || '' }, members: members };
   try { const js = JSON.stringify(s); if (js.length < 95000) cache.put(key, js, 300); } catch (e) {}
   return s;
 }
@@ -392,4 +428,58 @@ function pres_(dev, by) {
     }
   }
   return Object.keys(m).filter(k => now - m[k].t < 60000).map(k => ({ d: k, n: m[k].n }));
+}
+
+/* ---------- 현장 사진첩 (사진첩 시트: id, 시각ms, 시각, 촬영자, 설명, 썸네일, 조각 수, 사진 조각 10칸) ---------- */
+function albumSheet_() {
+  const ss = ss_();
+  let sh = ss.getSheetByName(ALBUMSHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ALBUMSHEET);
+    sh.getRange('A:Q').setNumberFormat('@');
+    const head = ['id', '시각(ms)', '시각', '촬영자', '설명', '썸네일', '조각'];
+    for (let k = 1; k <= ALB_CHUNKS; k++) head.push('사진' + k);
+    sh.getRange(1, 1, 1, head.length).setValues([head]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function albumRow_(id) {
+  const sh = albumSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return 0;
+  const i = sh.getRange(2, 1, n, 1).getDisplayValues().map(x => x[0]).indexOf(String(id));
+  return i < 0 ? 0 : i + 2;
+}
+
+function albumSum_() {
+  const sh = albumSheet_();
+  const n = Math.max(0, sh.getLastRow() - 1);
+  return { n: n, last: n ? sh.getRange(sh.getLastRow(), 1).getDisplayValue() : '' };
+}
+
+function albumList_() {
+  const sh = albumSheet_();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return { ok: true, items: [] };
+  const items = sh.getRange(2, 1, n, 6).getDisplayValues()
+    .map(x => ({ id: x[0], t: Number(x[1]) || 0, time: x[2], by: x[3], cap: x[4], thumb: x[5] }))
+    .filter(o => o.id);
+  return { ok: true, items: items };
+}
+
+function albumImg_(ids) {
+  const sh = albumSheet_();
+  const n = sh.getLastRow() - 1;
+  const out = {};
+  if (n < 1) return { ok: true, imgs: out };
+  const all = sh.getRange(2, 1, n, 1).getDisplayValues().map(x => x[0]);
+  ids.slice(0, 6).forEach(id => {
+    const i = all.indexOf(String(id));
+    if (i < 0) return;
+    const v = sh.getRange(i + 2, 8, 1, ALB_CHUNKS).getDisplayValues()[0];
+    out[id] = v.join('');
+  });
+  return { ok: true, imgs: out };
 }

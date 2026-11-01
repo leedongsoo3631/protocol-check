@@ -21,6 +21,8 @@ import android.util.Base64;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
+import android.provider.MediaStore.Downloads;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -44,7 +46,11 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.webkit.WebViewAssetLoader;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.io.OutputStream;
 
 /**
@@ -62,6 +68,12 @@ public class MainActivity extends ComponentActivity {
     private ActivityResultLauncher<String> notifPerm;
     private ActivityResultLauncher<String[]> locPerm;
     private GeolocationPermissions.Callback geoCb;
+    private ActivityResultLauncher<String> camPerm;
+    private PermissionRequest camReq;          // 보드 안 카메라(getUserMedia) 허용 대기
+    private boolean camForChooser = false;    // 시스템 카메라로 찍기 대기
+    private ActivityResultLauncher<Uri> takePic;
+    private Uri camUri;
+    private final Map<String, File> parts = new HashMap<>();
     private String geoOrigin;
 
     @Override
@@ -109,6 +121,25 @@ public class MainActivity extends ComponentActivity {
             if (!granted) Toast.makeText(this, "알림을 허용해야 화면이 꺼져 있을 때 알림을 받을 수 있습니다", Toast.LENGTH_LONG).show();
         });
         WatchService.channels(this);
+        // 카메라: 보드 안 카메라 화면 또는 시스템 카메라
+        takePic = registerForActivityResult(new ActivityResultContracts.TakePicture(), ok -> {
+            if (fileCallback == null) return;
+            fileCallback.onReceiveValue(ok && camUri != null ? new Uri[]{camUri} : null);
+            fileCallback = null;
+        });
+        camPerm = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+            if (camReq != null) {
+                if (granted) camReq.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                else camReq.deny();
+                camReq = null;
+            }
+            if (camForChooser) {
+                camForChooser = false;
+                if (granted) launchCamera();
+                else if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
+            }
+            if (!granted) Toast.makeText(this, "카메라를 허용해야 앱에서 사진을 찍을 수 있습니다", Toast.LENGTH_LONG).show();
+        });
         locPerm = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), res -> {
             boolean ok = Boolean.TRUE.equals(res.get(Manifest.permission.ACCESS_FINE_LOCATION))
                     || Boolean.TRUE.equals(res.get(Manifest.permission.ACCESS_COARSE_LOCATION));
@@ -161,9 +192,29 @@ public class MainActivity extends ComponentActivity {
             }
 
             @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                boolean video = false;
+                for (String r : request.getResources()) if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) video = true;
+                if (!video || !HOST.equals(request.getOrigin().getHost())) { request.deny(); return; }
+                runOnUiThread(() -> {
+                    if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    } else {
+                        camReq = request;
+                        camPerm.launch(Manifest.permission.CAMERA);
+                    }
+                });
+            }
+
+            @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                if (params.isCaptureEnabled()) {
+                    if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launchCamera();
+                    else { camForChooser = true; camPerm.launch(Manifest.permission.CAMERA); }
+                    return true;
+                }
                 boolean image = false;
                 for (String t : params.getAcceptTypes()) {
                     if (t != null && t.startsWith("image")) image = true;
@@ -233,6 +284,54 @@ public class MainActivity extends ComponentActivity {
     protected void onDestroy() {
         if (web != null) web.destroy();
         super.onDestroy();
+    }
+
+    private void launchCamera() {
+        try {
+            File dir = new File(getCacheDir(), "camera");
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdirs();
+            File f = new File(dir, "shot_" + System.currentTimeMillis() + ".jpg");
+            camUri = FileProvider.getUriForFile(this, getPackageName() + ".files", f);
+            takePic.launch(camUri);
+        } catch (Exception e) {
+            if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
+        }
+    }
+
+    /** 큰 파일(PDF·ZIP)을 조각으로 받아 다운로드 폴더에 저장하거나 공유 */
+    private boolean saveToDownloads(File f, String name, String mime) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false;
+        try {
+            ContentValues v = new ContentValues();
+            v.put(Downloads.DISPLAY_NAME, safeName(name));
+            v.put(Downloads.MIME_TYPE, mime);
+            v.put(Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/의전체크");
+            Uri uri = getContentResolver().insert(Downloads.EXTERNAL_CONTENT_URI, v);
+            if (uri == null) return false;
+            try (OutputStream out = getContentResolver().openOutputStream(uri); InputStream in = new FileInputStream(f)) {
+                if (out == null) return false;
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void shareFileUri(File f, String mime) {
+        try {
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".files", f);
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType(mime);
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(send, "보내기"));
+        } catch (Exception e) {
+            Toast.makeText(this, "공유하지 못했습니다", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private static String safeName(String name) {
@@ -358,6 +457,50 @@ public class MainActivity extends ComponentActivity {
         @JavascriptInterface
         public boolean isWatching() {
             return !getSharedPreferences("watch", MODE_PRIVATE).getBoolean("off", false);
+        }
+
+        /** 큰 파일 조각 저장: begin → append(여러 번) → finish('save' | 'share') */
+        @JavascriptInterface
+        public String fileBegin(String name) {
+            try {
+                File dir = new File(getCacheDir(), "share");
+                //noinspection ResultOfMethodCallIgnored
+                dir.mkdirs();
+                File f = new File(dir, safeName(name));
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+                String id = Long.toString(System.nanoTime());
+                synchronized (parts) { parts.put(id, f); }
+                return id;
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
+        public boolean fileAppend(String id, String b64) {
+            File f;
+            synchronized (parts) { f = parts.get(id); }
+            if (f == null) return false;
+            try (FileOutputStream out = new FileOutputStream(f, true)) {
+                out.write(Base64.decode(b64, Base64.DEFAULT));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
+        public boolean fileFinish(String id, String mime, String action) {
+            File f;
+            synchronized (parts) { f = parts.remove(id); }
+            if (f == null) return false;
+            String m = mime == null ? "application/octet-stream" : mime;
+            if ("share".equals(action)) {
+                runOnUiThread(() -> shareFileUri(f, m));
+                return true;
+            }
+            return saveToDownloads(f, f.getName(), m);
         }
 
         @JavascriptInterface

@@ -89,6 +89,18 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: 의전 체크 v1.0.${{ github.run_number }}
           body: |
-            - uijeon-check_v*.apk : 휴대폰에 바로 설치하는 파일 (test 가 붙은 것은 시험용)
-            - uijeon-check_playstore_*.aab : Google Play Console 에 올리는 파일
+            ## 📱 의전 체크 설치하기 (안드로이드)
+
+            ### ⬇️ [여기를 눌러 설치 파일 받기](https://github.com/leedongsoo3631/protocol-check/releases/latest/download/uijeon-check.apk)
+
+            1. 위 링크를 누르면 `uijeon-check.apk` 가 내려받아집니다 → 알림이나 '내 파일 > 다운로드'에서 엽니다
+            2. **'이 출처 허용'**(알 수 없는 앱 설치 허용)을 켜고 **설치**를 누릅니다
+            3. 앱을 열어 **이름만 입력하면 끝** — 공유 서버에 자동으로 연결됩니다
+
+            > 이전 시험용 앱이 있으면 먼저 지우고 설치하세요. 명단 편집 비밀번호는 담당자에게 따로 받으세요.
+
+            **주요 기능** 도착 체크 실시간 공유 · 좌석배치도 · 현장 사진첩(카메라·PDF) · 일정·식순 · 담당자 채팅·위치 · 행사 결과 보고
+
+            ---
+            <sub>파일 안내: uijeon-check.apk = 최신 설치 파일(같은 링크로 항상 최신) · uijeon-check_v*.apk = 이 버전 파일 · *_playstore_*.aab = 구글 플레이 등록용</sub>
           files: out/*
